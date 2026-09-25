@@ -14,7 +14,7 @@ function seeded(seed: number) {
   }
 }
 
-const TYPICAL_MINUTE: Record<string, number> = { gym: 7 * 60, dsa: 21 * 60, git: 23 * 60, torch: 16 * 60 }
+const TYPICAL_MINUTE: Record<string, number> = { gym: 7 * 60, dsa: 21 * 60, git: 23 * 60, torch: 23 * 60 + 20 }
 
 function atFor(day: DayKey, habitId: string, jitter: number) {
   const [y, m, d] = day.split('-').map(Number)
@@ -59,14 +59,20 @@ export async function loadDemo() {
   const today = dayKeyOf()
   const start = addDays(today, -74)
   const habits = await db.habits.toArray()
-  await Promise.all([db.logs.clear(), db.photos.clear(), db.misses.clear(), db.rival.clear()])
+  await Promise.all([db.logs.clear(), db.photos.clear(), db.misses.clear(), db.rival.clear(), db.checkins.clear()])
   await db.settings.put({ key: 'startDay', value: start })
 
   const days = rangeKeys(start, addDays(today, -1))
   for (const [i, day] of days.entries()) {
     const back = diffDays(today, day)
+    // Late nights make the next day worse, and gym slips drag DSA down: the patterns the insights should find.
+    const lateNight = r() < 0.3
+    let gymMissed = false
+    let missedToday = 0
     for (const h of habits) {
       let p = 0.5 + (i / days.length) * 0.35
+      if (lateNight) p -= 0.25
+      if (h.id === 'dsa' && gymMissed) p -= 0.35
       if (h.id === 'gym' && weekdayIndex(day) === 3) p -= 0.4 // weak Thursdays
       if (h.id === 'torch') p -= 0.15 // the irregular one
       let kept = r() < p
@@ -74,6 +80,8 @@ export async function loadDemo() {
       if (h.id === 'dsa' && back <= 2) kept = back === 2
       if (h.id === 'torch' && back <= 2) kept = false
       if (h.id === 'gym' && back <= 3) kept = true
+      if (h.id === 'gym') gymMissed = !kept
+      if (!kept) missedToday++
 
       if (kept) {
         const level: Level = r() < 0.3 ? 'full' : 'min'
@@ -94,8 +102,13 @@ export async function loadDemo() {
       } else if (back > 3 && r() < 0.8) {
         const n = 1 + Math.floor(r() * 2)
         const reasons = [...new Set(Array.from({ length: n }, () => DEMO_REASONS[Math.floor(r() * DEMO_REASONS.length)]))]
-        await db.misses.add({ habitId: h.id, day, reasons, at: Date.now() })
+        await db.misses.add({ habitId: h.id, day, reasons: lateNight && r() < 0.6 ? ['Slept late'] : reasons, at: Date.now() })
       }
+    }
+    if (back > 1 && r() < 0.85) {
+      const sleep = lateNight ? 25 * 60 + 30 + Math.floor(r() * 2) * 60 : 22 * 60 + 30 + Math.floor(r() * 3) * 60
+      const energy = Math.max(1, Math.min(5, 4 - missedToday + Math.round(r() * 2 - 1)))
+      await db.checkins.add({ day, sleep, energy, at: Date.now() })
     }
   }
 

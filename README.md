@@ -10,6 +10,8 @@ A personal, offline-first habit app (installable phone web app) built around:
 - **Alankrit:** an adaptive rival who does the same habits, posts live updates and talks a little trash
 - **GitHub auto-seal:** any push seals the GitHub habit
 - **Backup:** one .zip with all history and photos (share to Drive on Android), full restore
+- **Patterns:** plain-language findings from your own history (triggers, domino habit, sleep, weekday), plus a two-tap evening check-in
+- **Notifications:** Alankrit's moves, danger days and an evening check, sent by the Worker
 - **Cloud backup:** automatic sync to your own Cloudflare Worker (D1 for history and photos, free tier, no card)
 
 See [SPEC.md](SPEC.md) for the full product spec.
@@ -69,6 +71,7 @@ npm run types && npm run deploy
 | `src/lib/stats.ts` | Status, danger days, chains, ghost race |
 | `src/lib/alankrit.ts` | Rival generation (seeded, adaptive, locked per day), scoring, trash talk |
 | `src/lib/github.ts` | GitHub push detection |
+| `src/lib/insights.ts` | Pattern engine behind the Patterns tab |
 | `src/lib/backup.ts` | Backup format, .zip export/import, restore |
 | `src/lib/cloud.ts` | Pairing, auto-sync and restore against the Worker |
 | `worker/` | Cloudflare Worker + D1 schemas (`migrations/`, `migrations-photos/`) for cloud backup |

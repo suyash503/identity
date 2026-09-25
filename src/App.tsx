@@ -1,32 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
-import { CalendarCheck, Ghost, Images, type LucideIcon } from 'lucide-react'
+import { CalendarCheck, Ghost, Images, Sparkles, type LucideIcon } from 'lucide-react'
 import type { Habit } from './db'
 import { useData } from './data'
 import { unansweredMisses } from './lib/stats'
 import { Today } from './screens/Today'
 import { Race } from './screens/Race'
 import { Rituals } from './screens/Rituals'
+import { Patterns } from './screens/Patterns'
 import { Settings } from './screens/Settings'
 import { RitualFlow } from './components/RitualFlow'
 import { RivalFeed } from './components/Rival'
 import { MissCheckin, type MissItem } from './components/MissCheckin'
+import { EveningCheckin } from './components/EveningCheckin'
+import { minutesInto } from './lib/day'
 
-type Tab = 'today' | 'race' | 'rituals'
+type Tab = 'today' | 'race' | 'patterns' | 'rituals'
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'today', label: 'Today', icon: CalendarCheck },
   { id: 'race', label: 'Race', icon: Ghost },
+  { id: 'patterns', label: 'Patterns', icon: Sparkles },
   { id: 'rituals', label: 'Rituals', icon: Images },
 ]
 
 export function App() {
-  const { ix, habits, misses } = useData()
+  const { ix, habits, misses, checkins, today, now } = useData()
   const [tab, setTab] = useState<Tab>('today')
   const [ritualHabit, setRitualHabit] = useState<Habit | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [feedOpen, setFeedOpen] = useState(false)
   const [checkin, setCheckin] = useState<MissItem[] | null>(null)
+  const [evening, setEvening] = useState(false)
 
   // Ask about recent misses once per app launch.
   const asked = useRef(false)
@@ -36,6 +41,16 @@ export function App() {
     const items = unansweredMisses(ix, habits, misses)
     if (items.length) setCheckin(items)
   }, [ix, habits, misses])
+
+  // Evening check-in: offered once per launch after 8 PM, never over the miss check-in or a ritual.
+  const offeredEvening = useRef(false)
+  const eveningDue = minutesInto(today, now) >= 20 * 60 && !checkins.has(today) && ix.today >= ix.startDay
+  useEffect(() => {
+    if (eveningDue && !offeredEvening.current && !checkin && !ritualHabit) {
+      offeredEvening.current = true
+      setEvening(true)
+    }
+  }, [eveningDue, checkin, ritualHabit])
 
   const switchTab = (t: Tab) => {
     setTab(t)
@@ -49,6 +64,7 @@ export function App() {
           <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
             {tab === 'today' && <Today onOpenHabit={setRitualHabit} onOpenSettings={() => setSettingsOpen(true)} onOpenFeed={() => setFeedOpen(true)} />}
             {tab === 'race' && <Race />}
+            {tab === 'patterns' && <Patterns onOpenCheckin={() => setEvening(true)} />}
             {tab === 'rituals' && <Rituals />}
           </motion.div>
         </AnimatePresence>
@@ -80,6 +96,7 @@ export function App() {
       <AnimatePresence>{settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}</AnimatePresence>
       <AnimatePresence>{feedOpen && <RivalFeed onClose={() => setFeedOpen(false)} />}</AnimatePresence>
       <AnimatePresence>{checkin && !ritualHabit && <MissCheckin items={checkin} onDone={() => setCheckin(null)} />}</AnimatePresence>
+      <AnimatePresence>{evening && !checkin && !ritualHabit && <EveningCheckin onDone={() => setEvening(false)} />}</AnimatePresence>
     </MotionConfig>
   )
 }

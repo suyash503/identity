@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Habit, type Log, type Miss } from './db'
+import { db, type CheckIn, type Habit, type Log, type Miss } from './db'
 import { dayKeyOf, type DayKey } from './lib/day'
 import { buildIndex, type Index } from './lib/stats'
 import { syncGithub } from './lib/github'
@@ -12,6 +12,7 @@ export interface Data {
   habits: Habit[]
   logs: Log[]
   misses: Miss[]
+  checkins: Map<DayKey, CheckIn>
   settings: Record<string, unknown>
   ix: Index
   today: DayKey
@@ -45,14 +46,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const misses = useLiveQuery(() => db.misses.toArray())
   const settingRows = useLiveQuery(() => db.settings.toArray())
   const rivalRows = useLiveQuery(() => db.rival.toArray())
+  const checkinRows = useLiveQuery(() => db.checkins.toArray())
 
   const data = useMemo<Data | null>(() => {
-    if (!habits || !logs || !misses || !settingRows || !rivalRows) return null
+    if (!habits || !logs || !misses || !settingRows || !rivalRows || !checkinRows) return null
     const settings = Object.fromEntries(settingRows.map((s) => [s.key, s.value]))
     const startDay = typeof settings.startDay === 'string' && settings.startDay <= today ? settings.startDay : today
     const rival: RivalMap = new Map(rivalRows.map((r) => [r.day, r]))
-    return { habits, logs, misses, settings, today, now, rival, ix: buildIndex(logs, startDay, today) }
-  }, [habits, logs, misses, settingRows, rivalRows, today, now])
+    const checkins = new Map(checkinRows.map((c) => [c.day, c]))
+    return { habits, logs, misses, checkins, settings, today, now, rival, ix: buildIndex(logs, startDay, today) }
+  }, [habits, logs, misses, checkinRows, settingRows, rivalRows, today, now])
 
   useGithubAutoSync(data)
   useCloudAutoSync(data)
@@ -98,11 +101,12 @@ function useCloudAutoSync(data: Data | null) {
   const logs = data?.logs
   const misses = data?.misses
   const habits = data?.habits
+  const checkins = data?.checkins
   useEffect(() => {
     if (!paired) return
     const id = setTimeout(() => void syncCloud(), 3000)
     return () => clearTimeout(id)
-  }, [paired, logs, misses, habits])
+  }, [paired, logs, misses, habits, checkins])
   useEffect(() => {
     if (!paired) return
     const run = () => document.visibilityState === 'visible' && void syncCloud()

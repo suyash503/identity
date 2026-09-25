@@ -47,6 +47,17 @@ export interface Miss {
   at: number
 }
 
+/** Evening check-in: how the day felt, and when you fell asleep the night before. */
+export interface CheckIn {
+  day: DayKey
+  /** 1 (drained) … 5 (charged) */
+  energy?: number
+  /** Minutes after the previous day's midnight, e.g. 1470 = 12:30 AM. */
+  sleep?: number
+  skipped?: boolean
+  at: number
+}
+
 /** Alankrit's locked result for one day, per habit. */
 export interface RivalResult {
   level: Level | null
@@ -118,6 +129,7 @@ class IdentityDB extends Dexie {
   misses!: Table<Miss, number>
   settings!: Table<Setting, string>
   rival!: Table<RivalDay, string>
+  checkins!: Table<CheckIn, string>
 
   constructor() {
     super('identity')
@@ -129,6 +141,7 @@ class IdentityDB extends Dexie {
       settings: 'key',
       rival: 'day',
     })
+    this.version(2).stores({ checkins: 'day' })
     this.on('populate', (tx) => {
       tx.table('habits').bulkAdd(DEFAULT_HABITS)
       tx.table('settings').add({ key: 'startDay', value: dayKeyOf() })

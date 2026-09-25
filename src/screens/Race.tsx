@@ -4,9 +4,8 @@ import { Ghost, Trophy } from 'lucide-react'
 import type { Habit } from '../db'
 import { useData } from '../data'
 import { Eyebrow, GHOST, HabitIcon, RivalAvatar, SectionLabel, Segmented, statusStyle } from '../components/ui'
-import { REASONS } from '../components/MissCheckin'
 import { addDays, fmtDay, rangeKeys, weekdayIndex } from '../lib/day'
-import { PERIODS, keptIn, longestChain, raceOf, reasonCounts, statusOf } from '../lib/stats'
+import { PERIODS, keptIn, longestChain, raceOf, statusOf } from '../lib/stats'
 import { RIVAL, monthStart, pastSeasons, scoreIn, weekStart, type Score } from '../lib/alankrit'
 
 type Opponent = 'ghost' | 'rival'
@@ -37,13 +36,12 @@ export function Race() {
 // ── Ghost ──
 
 function GhostView() {
-  const { habits, ix, misses, logs } = useData()
+  const { habits, ix, logs } = useData()
   const [periodIdx, setPeriodIdx] = useState(0)
   const period = PERIODS[periodIdx]
   const ids = habits.map((h) => h.id)
   const overall = raceOf(ix, ids, period.days)
   const ahead = overall.lead >= 0
-  const reasons = reasonCounts(misses)
   const periodFull = keptIn(ix, ids, addDays(ix.today, -(period.days - 1)), ix.today).full
 
   return (
@@ -124,30 +122,6 @@ function GhostView() {
         <StatTile label={`Full · ${period.label.toLowerCase()}`} value={periodFull} />
         <StatTile label="Rituals" value={logs.filter((l) => l.photoId).length} />
       </div>
-
-      <SectionLabel>What gets in the way</SectionLabel>
-      {reasons.length === 0 ? (
-        <p className="rounded-[24px] border border-line bg-surface px-5 py-4 text-[14px] text-ink-3">
-          No misses logged yet. When you miss, the app asks why, and your patterns show up here.
-        </p>
-      ) : (
-        <div className="space-y-2 rounded-[24px] border border-line bg-surface p-5">
-          {reasons.slice(0, REASONS.length).map(([r, n]) => (
-            <div key={r} className="flex items-center gap-3">
-              <div className="w-32 shrink-0 truncate text-[14px] text-ink-2">{r}</div>
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-3">
-                <motion.div
-                  className="h-full rounded-full bg-danger/80"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(n / reasons[0][1]) * 100}%` }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                />
-              </div>
-              <div className="w-6 text-right font-display font-bold tabular-nums">{n}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </>
   )
 }

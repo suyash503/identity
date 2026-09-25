@@ -99,7 +99,7 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 ## 6. Check-ins and pattern engine
 
 - **Miss check-in:** the next time I open the app after a miss, it asks "what got in the way?" with quick-tap chips (tired, slept late, phone, stress, no plan, social, other).
-- **Evening check-in (later):** energy 1–5, mood, and sleep time.
+- **Evening check-in:** energy 1–5 and when I fell asleep last night. Two taps, offered once after 8 PM.
 - **Pattern engine (after ~3 weeks of data):** finds correlations, e.g. "82% of gym misses follow nights you slept after 1am" or "DSA misses cluster on Thursdays."
 
 ---
@@ -126,15 +126,15 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 - Photo timeline
 
 **Phase 2: Reach and safety**
-- Push reminders (small server with a scheduled job + web push)
+- Push reminders ✅ (Worker cron + web push: Alankrit, danger days, evening check)
 - Backup / restore: backup file ✅ (one .zip, share to Drive, restore with confirmation, overdue nudge). Cloud backup ✅ (Cloudflare Worker + D1, phone pairing by code, auto-sync, photos in D1 photo databases)
-- LeetCode auto-check
-- Pattern insights from miss reasons
+- LeetCode auto-check (deferred, 2026-09-25)
+- Pattern insights ✅ (Patterns tab: #1 trigger, domino habit, late-night cost, weakest weekday, bounce-back rate, low-energy days, late-night sealing; each locked until there's enough data)
 
 **Phase 3: Growth**
 - Adaptive difficulty ("You've hit this 90% for 3 weeks. Level up?")
 - Monthly montage / time-lapse of ritual photos
-- Evening check-in (energy, mood, sleep)
+- Evening check-in ✅ (energy 1–5 + when you fell asleep; offered once after 8 PM)
 
 ## 9. Decisions log
 

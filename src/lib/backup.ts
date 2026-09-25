@@ -1,5 +1,5 @@
 import { strFromU8, strToU8, unzip, zip, type Unzipped, type Zippable } from 'fflate'
-import { db, type Habit, type Log, type Miss, type Photo, type RivalDay, type Setting } from '../db'
+import { db, type CheckIn, type Habit, type Log, type Miss, type Photo, type RivalDay, type Setting } from '../db'
 import { dayKeyOf, type DayKey } from './day'
 
 const FORMAT = 'identity-backup'
@@ -20,6 +20,8 @@ export interface Manifest {
   misses: Miss[]
   settings: Setting[]
   rival: RivalDay[]
+  /** Added after v1 shipped; older backups don't have it. */
+  checkins?: CheckIn[]
   photos: PhotoMeta[]
 }
 
@@ -63,12 +65,13 @@ export function validateManifest(manifest: Manifest) {
 
 /** Everything except photo bytes. */
 export async function buildManifest(): Promise<Manifest> {
-  const [habits, logs, misses, settings, rival] = await Promise.all([
+  const [habits, logs, misses, settings, rival, checkins] = await Promise.all([
     db.habits.toArray(),
     db.logs.toArray(),
     db.misses.toArray(),
     db.settings.toArray(),
     db.rival.toArray(),
+    db.checkins.toArray(),
   ])
   const photos: PhotoMeta[] = []
   await db.photos.each(({ blob: _b, thumb: _t, ...meta }) => void photos.push(meta as PhotoMeta))
@@ -81,6 +84,7 @@ export async function buildManifest(): Promise<Manifest> {
     misses,
     settings: settings.filter((s) => !LOCAL_ONLY.has(s.key)),
     rival,
+    checkins,
     photos,
   }
 }
@@ -119,7 +123,7 @@ export async function readBackup(file: Blob): Promise<ParsedBackup> {
 
 /** Replaces everything on this device. Local-only settings (like the GitHub token) are kept. */
 export async function replaceAllData(manifest: Manifest, photos: Photo[]) {
-  const tables = [db.habits, db.logs, db.photos, db.misses, db.settings, db.rival]
+  const tables = [db.habits, db.logs, db.photos, db.misses, db.settings, db.rival, db.checkins]
   await db.transaction('rw', tables, async () => {
     const keep = (await db.settings.toArray()).filter((s) => LOCAL_ONLY.has(s.key) && s.key !== 'lastBackup')
     await Promise.all(tables.map((t) => t.clear()))
@@ -128,6 +132,7 @@ export async function replaceAllData(manifest: Manifest, photos: Photo[]) {
     await db.photos.bulkAdd(photos)
     await db.misses.bulkAdd(manifest.misses)
     await db.rival.bulkAdd(manifest.rival)
+    await db.checkins.bulkAdd(manifest.checkins ?? [])
     await db.settings.bulkPut([...manifest.settings.filter((s) => !LOCAL_ONLY.has(s.key)), ...keep])
     // A restore counts as a backup you already have.
     await db.settings.put({ key: 'lastBackup', value: manifest.exportedAt })
