@@ -4,6 +4,7 @@ import { setSetting } from '../db'
 import { useData } from '../data'
 import { backupAgo, backupOverdue, createBackup, readBackup, restoreBackup, saveBackupFile, type ParsedBackup } from '../lib/backup'
 import { dayNumber } from '../lib/stats'
+import type { CloudSyncState } from '../lib/cloud'
 import { SectionLabel } from './ui'
 
 const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`
@@ -59,7 +60,7 @@ export function BackupSection() {
   const StatusIcon = safe ? ShieldCheck : ShieldAlert
   return (
     <>
-      <SectionLabel color={overdue ? 'var(--color-danger)' : undefined}>Backup</SectionLabel>
+      <SectionLabel color={overdue ? 'var(--color-danger)' : undefined}>Backup file</SectionLabel>
       <div className="rounded-[24px] border border-line bg-surface p-5">
         <div className="flex items-center gap-3">
           <div
@@ -127,13 +128,21 @@ export function BackupSection() {
 
 /** Shown on Today when a backup is overdue. */
 export function BackupNudge({ onOpen }: { onOpen: () => void }) {
+  const { settings } = useData()
   const { last, overdue } = useOverdue()
   if (!overdue) return null
+  const cloud = settings.cloudSync as CloudSyncState | undefined
+  const historyInCloud = !!settings.cloudToken && !!cloud && !cloud.error
   return (
     <button onClick={onOpen} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-danger/35 bg-danger/10 px-4 py-3 text-left">
       <ShieldAlert size={20} className="shrink-0 text-danger" aria-hidden />
       <span className="flex-1 text-[14px] text-ink">
-        {last ? `Last backup ${backupAgo(last)}.` : 'Your rituals aren’t backed up yet.'} <span className="text-ink-2">Back up now</span>
+        {historyInCloud
+          ? 'History is in the cloud, but your photos aren’t.'
+          : last
+            ? `Last backup ${backupAgo(last)}.`
+            : 'Your rituals aren’t backed up yet.'}{' '}
+        <span className="text-ink-2">Back up now</span>
       </span>
       <ChevronRight size={18} className="text-ink-3" aria-hidden />
     </button>

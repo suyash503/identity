@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "identity-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://suyash503.github.io,http://localhost:5173"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "identity",
+      "database_id": "f7e369fa-dd2c-4b3a-a298-a422f3d890b7",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // Photos: add once R2 is enabled in the dashboard, then redeploy.
+  // "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "identity-photos" }]
+}

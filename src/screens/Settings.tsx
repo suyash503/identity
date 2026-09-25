@@ -6,6 +6,7 @@ import { Eyebrow, HabitIcon, Overlay, SectionLabel } from '../components/ui'
 import { fmtDay } from '../lib/day'
 import { syncGithub, type GithubSyncState } from '../lib/github'
 import { BackupSection } from '../components/BackupSection'
+import { CloudSection } from '../components/CloudSection'
 
 export function Settings({ onClose }: { onClose: () => void }) {
   const { habits, settings, ix } = useData()
@@ -83,6 +84,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      <CloudSection />
       <BackupSection />
 
       <SectionLabel>Your data</SectionLabel>

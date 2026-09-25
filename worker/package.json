@@ -1,0 +1,23 @@
+{
+  "name": "identity-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "wrangler deploy",
+    "approve": "node scripts/approve.mjs",
+    "migrate": "wrangler d1 migrations apply identity --remote",
+    "types": "wrangler types",
+    "check": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "private": "true",
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "wrangler": "^4.139.0"
+  }
+}

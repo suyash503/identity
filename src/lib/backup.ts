@@ -5,12 +5,13 @@ import { dayKeyOf, type DayKey } from './day'
 const FORMAT = 'identity-backup'
 const VERSION = 1
 
-/** Secrets and bookkeeping that stay on this device and never go into a backup file. */
-const LOCAL_ONLY = new Set(['githubToken', 'githubSync', 'lastBackup'])
+/** Secrets and bookkeeping that stay on this device and never go into a backup. */
+const LOCAL_ONLY = new Set(['githubToken', 'githubSync', 'lastBackup', 'cloudToken', 'cloudSync', 'cloudHash'])
 
-type PhotoMeta = Omit<Photo, 'blob' | 'thumb'> & { id: number }
+export type PhotoMeta = Omit<Photo, 'blob' | 'thumb'> & { id: number }
 
-interface Manifest {
+/** backup.json: the same format for the .zip file and the cloud snapshot. */
+export interface Manifest {
   format: typeof FORMAT
   version: number
   exportedAt: number
@@ -36,12 +37,15 @@ export interface ParsedBackup {
   summary: BackupSummary
 }
 
+/** Stable across devices and restores (local ids alone can repeat after a reset). */
+export const photoKey = (p: { id?: number; at: number }) => `${p.at}-${p.id}`
+
 const zipAsync = (files: Zippable) =>
   new Promise<Uint8Array>((resolve, reject) => zip(files, (err, data) => (err ? reject(err) : resolve(data))))
 const unzipAsync = (data: Uint8Array) =>
   new Promise<Unzipped>((resolve, reject) => unzip(data, (err, files) => (err ? reject(err) : resolve(files))))
 
-function summarize(m: Manifest): BackupSummary {
+export function summarize(m: Manifest): BackupSummary {
   const startDay = m.settings.find((s) => s.key === 'startDay')?.value as DayKey | undefined
   return {
     exportedAt: m.exportedAt,
@@ -52,25 +56,23 @@ function summarize(m: Manifest): BackupSummary {
   }
 }
 
-/** Everything in one .zip: backup.json plus the photos as plain JPEGs you can open anywhere. */
-export async function createBackup(): Promise<{ file: File; summary: BackupSummary }> {
-  const [habits, logs, misses, settings, rival, photos] = await Promise.all([
+export function validateManifest(manifest: Manifest) {
+  if (manifest?.format !== FORMAT) throw new Error('That isn’t an IDENTITY backup.')
+  if (manifest.version > VERSION) throw new Error('This backup was made by a newer version of the app. Update first.')
+}
+
+/** Everything except photo bytes. */
+export async function buildManifest(): Promise<Manifest> {
+  const [habits, logs, misses, settings, rival] = await Promise.all([
     db.habits.toArray(),
     db.logs.toArray(),
     db.misses.toArray(),
     db.settings.toArray(),
     db.rival.toArray(),
-    db.photos.toArray(),
   ])
-
-  const files: Zippable = {}
-  for (const p of photos) {
-    // JPEGs are already compressed; storing them avoids burning CPU for nothing.
-    files[`photos/${p.id}.jpg`] = [new Uint8Array(await p.blob.arrayBuffer()), { level: 0 }]
-    files[`thumbs/${p.id}.jpg`] = [new Uint8Array(await p.thumb.arrayBuffer()), { level: 0 }]
-  }
-
-  const manifest: Manifest = {
+  const photos: PhotoMeta[] = []
+  await db.photos.each(({ blob: _b, thumb: _t, ...meta }) => void photos.push(meta as PhotoMeta))
+  return {
     format: FORMAT,
     version: VERSION,
     exportedAt: Date.now(),
@@ -79,7 +81,18 @@ export async function createBackup(): Promise<{ file: File; summary: BackupSumma
     misses,
     settings: settings.filter((s) => !LOCAL_ONLY.has(s.key)),
     rival,
-    photos: photos.map(({ blob: _b, thumb: _t, ...meta }) => meta as PhotoMeta),
+    photos,
+  }
+}
+
+/** Everything in one .zip: backup.json plus the photos as plain JPEGs you can open anywhere. */
+export async function createBackup(): Promise<{ file: File; summary: BackupSummary }> {
+  const manifest = await buildManifest()
+  const files: Zippable = {}
+  for (const p of await db.photos.toArray()) {
+    // JPEGs are already compressed; storing them avoids burning CPU for nothing.
+    files[`photos/${p.id}.jpg`] = [new Uint8Array(await p.blob.arrayBuffer()), { level: 0 }]
+    files[`thumbs/${p.id}.jpg`] = [new Uint8Array(await p.thumb.arrayBuffer()), { level: 0 }]
   }
   files['backup.json'] = strToU8(JSON.stringify(manifest))
 
@@ -98,20 +111,14 @@ export async function readBackup(file: Blob): Promise<ParsedBackup> {
   const raw = files['backup.json']
   if (!raw) throw new Error('That zip isn’t an IDENTITY backup (no backup.json).')
   const manifest = JSON.parse(strFromU8(raw)) as Manifest
-  if (manifest.format !== FORMAT) throw new Error('That zip isn’t an IDENTITY backup.')
-  if (manifest.version > VERSION) throw new Error('This backup was made by a newer version of the app. Update first.')
+  validateManifest(manifest)
   const missing = manifest.photos.find((p) => !files[`photos/${p.id}.jpg`] || !files[`thumbs/${p.id}.jpg`])
   if (missing) throw new Error('This backup is incomplete: some photos are missing.')
   return { manifest, files, summary: summarize(manifest) }
 }
 
-/** Replaces everything on this device with the backup. Local-only settings (like the GitHub token) are kept. */
-export async function restoreBackup({ manifest, files }: ParsedBackup) {
-  const photos: Photo[] = manifest.photos.map((p) => ({
-    ...p,
-    blob: new Blob([files[`photos/${p.id}.jpg`] as BlobPart], { type: 'image/jpeg' }),
-    thumb: new Blob([files[`thumbs/${p.id}.jpg`] as BlobPart], { type: 'image/jpeg' }),
-  }))
+/** Replaces everything on this device. Local-only settings (like the GitHub token) are kept. */
+export async function replaceAllData(manifest: Manifest, photos: Photo[]) {
   const tables = [db.habits, db.logs, db.photos, db.misses, db.settings, db.rival]
   await db.transaction('rw', tables, async () => {
     const keep = (await db.settings.toArray()).filter((s) => LOCAL_ONLY.has(s.key) && s.key !== 'lastBackup')
@@ -125,6 +132,15 @@ export async function restoreBackup({ manifest, files }: ParsedBackup) {
     // A restore counts as a backup you already have.
     await db.settings.put({ key: 'lastBackup', value: manifest.exportedAt })
   })
+}
+
+export async function restoreBackup({ manifest, files }: ParsedBackup) {
+  const photos: Photo[] = manifest.photos.map((p) => ({
+    ...p,
+    blob: new Blob([files[`photos/${p.id}.jpg`] as BlobPart], { type: 'image/jpeg' }),
+    thumb: new Blob([files[`thumbs/${p.id}.jpg`] as BlobPart], { type: 'image/jpeg' }),
+  }))
+  await replaceAllData(manifest, photos)
 }
 
 /** Share sheet on Android (e.g. "Save to Drive"); a plain download everywhere else. */

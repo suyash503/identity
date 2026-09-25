@@ -127,7 +127,7 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 
 **Phase 2: Reach and safety**
 - Push reminders (small server with a scheduled job + web push)
-- Backup / restore: backup file ✅ (one .zip, share to Drive, restore with confirmation, overdue nudge). Next: automatic cloud backup
+- Backup / restore: backup file ✅ (one .zip, share to Drive, restore with confirmation, overdue nudge). Cloud backup ✅ (Cloudflare Worker + D1, phone pairing by code, auto-sync). Photos in R2 once enabled
 - LeetCode auto-check
 - Pattern insights from miss reasons
 
@@ -141,4 +141,5 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 - 2026-09-25: No AI coach.
 - 2026-09-25: Visual quality is the top priority. Dark, athletic, premium look.
 - 2026-09-25: Skill = PyTorch. DSA on LeetCode. Android phone.
+- 2026-09-25: Backend = Cloudflare (Workers + D1 + R2). Chosen over Supabase for 10 GB free photo storage and no pausing when inactive.
 - 2026-09-25: Add rival "Alankrit": adaptive difficulty, runs alongside the ghost, light trash talk, live updates (in-app feed in Phase 1, push notifications in Phase 2).

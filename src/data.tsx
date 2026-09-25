@@ -5,6 +5,7 @@ import { dayKeyOf, type DayKey } from './lib/day'
 import { buildIndex, type Index } from './lib/stats'
 import { syncGithub } from './lib/github'
 import { ensureRivalDays, type RivalMap } from './lib/alankrit'
+import { syncCloud } from './lib/cloud'
 
 export interface Data {
   habits: Habit[]
@@ -53,6 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [habits, logs, misses, settingRows, rivalRows, today, now])
 
   useGithubAutoSync(data)
+  useCloudAutoSync(data)
 
   // Lock in Alankrit's day as soon as it starts (and any days the app wasn't opened).
   const needsRival = data && !data.rival.has(data.today)
@@ -87,6 +89,29 @@ function useGithubAutoSync(data: Data | null) {
       document.removeEventListener('visibilitychange', run)
     }
   }, [user, token, startDay])
+}
+
+/** Backs up to the cloud a few seconds after anything changes, and when the app returns to the foreground or comes back online. */
+function useCloudAutoSync(data: Data | null) {
+  const paired = !!data?.settings.cloudToken
+  const logs = data?.logs
+  const misses = data?.misses
+  const habits = data?.habits
+  useEffect(() => {
+    if (!paired) return
+    const id = setTimeout(() => void syncCloud(), 3000)
+    return () => clearTimeout(id)
+  }, [paired, logs, misses, habits])
+  useEffect(() => {
+    if (!paired) return
+    const run = () => document.visibilityState === 'visible' && void syncCloud()
+    document.addEventListener('visibilitychange', run)
+    window.addEventListener('online', run)
+    return () => {
+      document.removeEventListener('visibilitychange', run)
+      window.removeEventListener('online', run)
+    }
+  }, [paired])
 }
 
 /** Object URL for a stored photo, revoked when the component unmounts. */
