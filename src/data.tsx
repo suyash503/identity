@@ -4,7 +4,8 @@ import { db, type Habit, type Log, type Miss } from './db'
 import { dayKeyOf, type DayKey } from './lib/day'
 import { buildIndex, type Index } from './lib/stats'
 import { syncGithub } from './lib/github'
-import { ensureRivalDays, type RivalMap } from './lib/alankrit'
+import type { RivalMap } from './lib/alankrit'
+import { ensureRivalDays } from './lib/rivalStore'
 import { syncCloud } from './lib/cloud'
 
 export interface Data {

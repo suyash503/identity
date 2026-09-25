@@ -6,7 +6,7 @@ const FORMAT = 'identity-backup'
 const VERSION = 1
 
 /** Secrets and bookkeeping that stay on this device and never go into a backup. */
-const LOCAL_ONLY = new Set(['githubToken', 'githubSync', 'lastBackup', 'cloudToken', 'cloudSync', 'cloudHash'])
+const LOCAL_ONLY = new Set(['githubToken', 'githubSync', 'lastBackup', 'cloudToken', 'cloudSync', 'cloudHash', 'cloudStateHash', 'push'])
 
 export type PhotoMeta = Omit<Photo, 'blob' | 'thumb'> & { id: number }
 

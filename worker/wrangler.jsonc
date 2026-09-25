@@ -10,8 +10,13 @@
     // Photo databases in order; new photos go to the last one. When it fills up,
     // create identity-photos-N, add its binding below and append it here.
     "PHOTO_SHARDS": "PHOTOS_1",
-    "PHOTO_SHARD_LIMIT_MB": "450"
+    "PHOTO_SHARD_LIMIT_MB": "450",
+    // Public half of the notification signing key. The private half is the VAPID_PRIVATE_KEY secret.
+    "VAPID_PUBLIC_KEY": "BObHkpu4AzcCF6O_50qx5zBvSrZAE2309fWGj-ndF9RAKwAU42oHXvtTs2tE8Rj_nYLsFy_0swnL9cuZG9PPycM",
+    "VAPID_SUBJECT": "https://suyash503.github.io/identity/"
   },
+  // Checks every 15 minutes whether a notification is due.
+  "triggers": { "crons": ["*/15 * * * *"] },
   "d1_databases": [
     {
       "binding": "DB",

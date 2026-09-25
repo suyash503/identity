@@ -7,6 +7,7 @@ import { fmtDay } from '../lib/day'
 import { syncGithub, type GithubSyncState } from '../lib/github'
 import { BackupSection } from '../components/BackupSection'
 import { CloudSection } from '../components/CloudSection'
+import { NotificationsSection } from '../components/NotificationsSection'
 
 export function Settings({ onClose }: { onClose: () => void }) {
   const { habits, settings, ix } = useData()
@@ -45,6 +46,8 @@ export function Settings({ onClose }: { onClose: () => void }) {
           <HabitEditor key={h.id} habit={h} />
         ))}
       </div>
+
+      <NotificationsSection />
 
       <SectionLabel>GitHub auto-seal</SectionLabel>
       <div className="space-y-3 rounded-[24px] border border-line bg-surface p-5">

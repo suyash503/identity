@@ -1,12 +1,15 @@
-// IDENTITY backup server: one user, a few paired phones, snapshots in D1, photos in D1 photo databases.
+// IDENTITY backup server: one user, a few paired phones, snapshots in D1, photos in D1 photo databases,
+// and push notifications (Alankrit's moves, danger days, evening check) from a 15-minute cron.
+import { runNotifications, sendPush, subscriptionsFor, type AppState, type NotifyEnv, type PushPrefs } from './notify'
 
-type AppEnv = Env
+type AppEnv = NotifyEnv
 
 const PAIR_TTL_MS = 10 * 60_000
 const MAX_PENDING_PAIRINGS = 5
 const KEEP_SNAPSHOTS = 60
 const MAX_SNAPSHOT_BYTES = 1_900_000 // D1 rows top out at 2 MB
 const MAX_PHOTO_BYTES = 1_900_000 // D1 rows top out at 2 MB
+const MAX_STATE_BYTES = 500_000
 
 const json = (data: unknown, status = 200) => Response.json(data, { status })
 const error = (message: string, status: number) => json({ error: message }, status)
@@ -43,6 +46,10 @@ export default {
     for (const [k, v] of Object.entries(cors)) out.headers.set(k, v)
     return out
   },
+
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(runNotifications(env))
+  },
 } satisfies ExportedHandler<AppEnv>
 
 async function route(req: Request, env: AppEnv): Promise<Response> {
@@ -64,6 +71,11 @@ async function route(req: Request, env: AppEnv): Promise<Response> {
   const photo = pathname.match(/^\/v1\/photos\/([\w-]{1,64})\/(full|thumb)$/)
   if (photo && method === 'PUT') return putPhoto(req, env, photo[1], photo[2] as 'full' | 'thumb')
   if (photo && method === 'GET') return getPhoto(env, photo[1], photo[2] as 'full' | 'thumb')
+  if (pathname === '/v1/state' && method === 'PUT') return putState(req, env)
+  if (pathname === '/v1/rival' && method === 'GET') return getRivalDays(req, env)
+  if (pathname === '/v1/push/subscribe' && method === 'POST') return pushSubscribe(req, env, deviceId)
+  if (pathname === '/v1/push/unsubscribe' && method === 'POST') return pushUnsubscribe(req, env, deviceId)
+  if (pathname === '/v1/push/test' && method === 'POST') return pushTest(env, deviceId)
 
   return error('Not found', 404)
 }
@@ -197,4 +209,67 @@ async function getPhoto(env: AppEnv, key: string, kind: 'full' | 'thumb') {
   const blob = await db.prepare('SELECT data FROM blobs WHERE key = ? AND kind = ?').bind(key, kind).first<{ data: ArrayBuffer | number[] }>()
   if (!blob) return error('Not found', 404)
   return new Response(new Uint8Array(blob.data), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=31536000, immutable' } })
+}
+
+// ── State for notifications ──
+
+async function putState(req: Request, env: AppEnv) {
+  const text = await req.text()
+  if (text.length > MAX_STATE_BYTES) return error('State too large', 413)
+  const state = JSON.parse(text) as AppState
+  if (!Array.isArray(state.habits) || !Array.isArray(state.logs) || !Array.isArray(state.rival) || typeof state.startDay !== 'string') {
+    return error('Bad state', 400)
+  }
+  await env.DB.prepare('INSERT OR REPLACE INTO state (id, updated_at, data) VALUES (1, ?, ?)').bind(Date.now(), text).run()
+  return json({ ok: true })
+}
+
+/** Days the server locked in for Alankrit, so the app uses exactly the same ones. */
+async function getRivalDays(req: Request, env: AppEnv) {
+  const since = new URL(req.url).searchParams.get('since') ?? ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(since)) return error('Bad date', 400)
+  const { results } = await env.DB.prepare('SELECT data FROM rival_days WHERE day >= ? ORDER BY day').bind(since).all<{ data: string }>()
+  return json(results.map((r) => JSON.parse(r.data)))
+}
+
+// ── Push subscriptions ──
+
+async function pushSubscribe(req: Request, env: AppEnv, deviceId: string) {
+  const body = (await req.json().catch(() => null)) as {
+    subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } }
+    timeZone?: string
+    prefs?: Partial<PushPrefs>
+  } | null
+  const sub = body?.subscription
+  if (!sub?.endpoint?.startsWith('https://') || !sub.keys?.p256dh || !sub.keys.auth) return error('Bad subscription', 400)
+  const timeZone = typeof body?.timeZone === 'string' ? body.timeZone : 'UTC'
+  try {
+    new Intl.DateTimeFormat('en', { timeZone })
+  } catch {
+    return error('Bad time zone', 400)
+  }
+  const prefs: PushPrefs = { rival: body?.prefs?.rival !== false, danger: body?.prefs?.danger !== false, evening: body?.prefs?.evening !== false }
+  await env.DB.prepare(
+    `INSERT INTO push_subscriptions (endpoint, device_id, p256dh, auth, time_zone, prefs, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT (endpoint) DO UPDATE SET device_id = excluded.device_id, p256dh = excluded.p256dh, auth = excluded.auth,
+       time_zone = excluded.time_zone, prefs = excluded.prefs`,
+  )
+    .bind(sub.endpoint, deviceId, sub.keys.p256dh, sub.keys.auth, timeZone, JSON.stringify(prefs), Date.now())
+    .run()
+  return json({ ok: true, prefs })
+}
+
+async function pushUnsubscribe(req: Request, env: AppEnv, deviceId: string) {
+  const body = (await req.json().catch(() => null)) as { endpoint?: string } | null
+  if (!body?.endpoint) return error('Missing endpoint', 400)
+  await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND device_id = ?').bind(body.endpoint, deviceId).run()
+  return json({ ok: true })
+}
+
+async function pushTest(env: AppEnv, deviceId: string) {
+  let sent = 0
+  for (const sub of await subscriptionsFor(env, deviceId)) {
+    if (await sendPush(env, sub, { title: 'IDENTITY', body: 'Notifications work. Alankrit is watching.', tag: 'test' })) sent++
+  }
+  return sent ? json({ ok: true, sent }) : error('No working notification subscription on this phone', 404)
 }

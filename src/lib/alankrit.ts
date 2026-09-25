@@ -1,4 +1,5 @@
-import { db, type Habit, type IconKey, type Level, type Log, type RivalDay } from '../db'
+// Pure logic, shared by the app and the Cloudflare Worker (worker/). No database or browser APIs here.
+import type { Habit, IconKey, Level, Log, RivalDay, RivalResult } from '../db'
 import { addDays, diffDays, fmtDay, fmtMinute, minutesInto, monthKey, rangeKeys, weekdayIndex, type DayKey } from './day'
 import { alertOf, isKept, keptIn, statusOf, type DayStatus, type Index } from './stats'
 
@@ -119,7 +120,7 @@ function formBefore(ix: Index, habitId: string, day: DayKey) {
   return { rate: kept / days, fullShare: kept ? full / kept : 0.3 }
 }
 
-function generateDay(ix: Index, habits: Habit[], day: DayKey, rival: RivalMap): RivalDay {
+export function generateDay(ix: Index, habits: Habit[], day: DayKey, rival: RivalMap): RivalDay {
   const results: RivalDay['results'] = {}
   for (const habit of habits) {
     const r = rng(`alankrit|${day}|${habit.id}`)
@@ -141,27 +142,6 @@ function generateDay(ix: Index, habits: Habit[], day: DayKey, rival: RivalMap): 
     results[habit.id] = { level, minute: showUp ? Math.round(a + r() * (b - a)) : b + 15 }
   }
   return { day, results }
-}
-
-let inflight: Promise<void> | undefined
-
-/** Generates and stores every missing day up to today. Stored days never change, so Alankrit can't cheat. */
-export function ensureRivalDays(ix: Index, habits: Habit[]): Promise<void> {
-  inflight ??= generateMissing(ix, habits).finally(() => (inflight = undefined))
-  return inflight
-}
-
-async function generateMissing(ix: Index, habits: Habit[]) {
-  const stored = await db.rival.where('day').between(ix.startDay, ix.today, true, true).toArray()
-  const rival: RivalMap = new Map(stored.map((r) => [r.day, r]))
-  const fresh: RivalDay[] = []
-  for (const d of rangeKeys(ix.startDay, ix.today)) {
-    if (rival.has(d)) continue
-    const g = generateDay(ix, habits, d, rival)
-    rival.set(d, g)
-    fresh.push(g)
-  }
-  if (fresh.length) await db.rival.bulkPut(fresh)
 }
 
 // ── Voice: light trash talk ──
@@ -197,6 +177,13 @@ export interface FeedItem {
   text: string
 }
 
+/** What Alankrit says about one habit on one day. The same words in the app feed and in notifications. */
+export function rivalLine(day: DayKey, habit: Habit, r: RivalResult): string {
+  const rand = rng(`line|${day}|${habit.id}`)
+  const pool = r.level === null ? SKIP : [...(r.level === 'full' ? DONE_FULL : DONE_MIN), ...(SPECIAL[habit.icon] ?? [])]
+  return pick(pool, rand).replaceAll('{habit}', habit.name).replaceAll('{time}', fmtMinute(r.minute))
+}
+
 function minuteOfLog(log: Log, day: DayKey) {
   return minutesInto(day, log.at)
 }
@@ -209,10 +196,7 @@ export function todayFeed(ix: Index, rival: RivalMap, habits: Habit[], now: numb
   for (const habit of habits) {
     const r = res[habit.id]
     if (r && r.minute <= nowMin) {
-      const rand = rng(`line|${ix.today}|${habit.id}`)
-      const pool = r.level === null ? SKIP : [...(r.level === 'full' ? DONE_FULL : DONE_MIN), ...(SPECIAL[habit.icon] ?? [])]
-      const text = pick(pool, rand).replaceAll('{habit}', habit.name).replaceAll('{time}', fmtMinute(r.minute))
-      items.push({ key: `r-${habit.id}`, minute: r.minute, who: 'rival', habit, level: r.level, text })
+      items.push({ key: `r-${habit.id}`, minute: r.minute, who: 'rival', habit, level: r.level, text: rivalLine(ix.today, habit, r) })
     }
     const log = ix.logs.get(`${habit.id}|${ix.today}`)
     if (log) {

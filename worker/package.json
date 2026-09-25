@@ -8,7 +8,8 @@
     "approve": "node scripts/approve.mjs",
     "migrate": "wrangler d1 migrations apply identity --remote && wrangler d1 migrations apply identity-photos-1 --remote",
     "types": "wrangler types",
-    "check": "tsc"
+    "check": "tsc",
+    "sim": "esbuild scripts/notify-sim.ts --bundle --platform=node --format=esm --outfile=.wrangler/sim.mjs --log-level=warning && node .wrangler/sim.mjs"
   },
   "keywords": [],
   "author": "",
@@ -19,5 +20,8 @@
   "devDependencies": {
     "typescript": "^7.0.2",
     "wrangler": "^4.139.0"
+  },
+  "dependencies": {
+    "@block65/webcrypto-web-push": "^2.0.0"
   }
 }
