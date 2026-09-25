@@ -9,6 +9,7 @@ A personal, offline-first habit app (installable phone web app) built around:
 - **Ghost race:** you vs last-week, last-month and last-quarter you
 - **Alankrit:** an adaptive rival who does the same habits, posts live updates and talks a little trash
 - **GitHub auto-seal:** any push seals the GitHub habit
+- **Backup:** one .zip with all history and photos (share to Drive on Android), full restore
 
 See [SPEC.md](SPEC.md) for the full product spec.
 

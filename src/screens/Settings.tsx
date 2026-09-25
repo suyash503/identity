@@ -5,6 +5,7 @@ import { useData } from '../data'
 import { Eyebrow, HabitIcon, Overlay, SectionLabel } from '../components/ui'
 import { fmtDay } from '../lib/day'
 import { syncGithub, type GithubSyncState } from '../lib/github'
+import { BackupSection } from '../components/BackupSection'
 
 export function Settings({ onClose }: { onClose: () => void }) {
   const { habits, settings, ix } = useData()
@@ -82,6 +83,8 @@ export function Settings({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      <BackupSection />
+
       <SectionLabel>Your data</SectionLabel>
       <div className="divide-y divide-line rounded-[24px] border border-line bg-surface px-5">
         <Row label="Day 1" value={fmtDay(ix.startDay, { day: 'numeric', month: 'long', year: 'numeric' })} />
@@ -89,9 +92,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
         <Row label="Stored on this phone" value={storage ? `${storage.usedMb.toFixed(1)} MB` : '—'} />
         <Row label="Protected from cleanup" value={storage ? (storage.persisted ? 'Yes' : 'Not yet (install the app)') : '—'} />
       </div>
-      <p className="mt-3 px-1 text-[13px] leading-relaxed text-ink-3">
-        Everything lives on this phone and works offline. Backup and export are coming in the next phase.
-      </p>
+      <p className="mt-3 px-1 text-[13px] leading-relaxed text-ink-3">Everything lives on this phone and works offline.</p>
 
       {import.meta.env.DEV && <DevTools />}
     </Overlay>

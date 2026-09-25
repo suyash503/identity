@@ -127,7 +127,7 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 
 **Phase 2: Reach and safety**
 - Push reminders (small server with a scheduled job + web push)
-- Backup / restore (export file, then cloud sync)
+- Backup / restore: backup file ✅ (one .zip, share to Drive, restore with confirmation, overdue nudge). Next: automatic cloud backup
 - LeetCode auto-check
 - Pattern insights from miss reasons
 
