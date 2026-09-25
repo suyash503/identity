@@ -267,9 +267,10 @@ async function pushUnsubscribe(req: Request, env: AppEnv, deviceId: string) {
 }
 
 async function pushTest(env: AppEnv, deviceId: string) {
-  let sent = 0
-  for (const sub of await subscriptionsFor(env, deviceId)) {
-    if (await sendPush(env, sub, { title: 'IDENTITY', body: 'Notifications work. Alankrit is watching.', tag: 'test' })) sent++
-  }
-  return sent ? json({ ok: true, sent }) : error('No working notification subscription on this phone', 404)
+  const subs = await subscriptionsFor(env, deviceId)
+  if (!subs.length) return error('This phone has no notification subscription. Turn notifications off and on again.', 404)
+  const statuses: number[] = []
+  for (const sub of subs) statuses.push(await sendPush(env, sub, { title: 'IDENTITY', body: 'Notifications work. Alankrit is watching.', tag: 'test' }))
+  if (statuses.some((s) => s >= 200 && s < 300)) return json({ ok: true })
+  return error(`The push service refused the test (HTTP ${statuses.join(', ')}). Turn notifications off and on again.`, 502)
 }

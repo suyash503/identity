@@ -135,17 +135,17 @@ function toSubscription(row: SubscriptionRow): PushSubscription {
   return { endpoint: row.endpoint, expirationTime: null, keys: { p256dh: row.p256dh, auth: row.auth } }
 }
 
-/** Sends one push. Returns false when the subscription is gone for good (and removes it). */
-export async function sendPush(env: NotifyEnv, row: SubscriptionRow, payload: { title: string; body: string; tag: string }): Promise<boolean> {
+/** Sends one push and returns the push service's HTTP status. Subscriptions that are gone for good are removed. */
+export async function sendPush(env: NotifyEnv, row: SubscriptionRow, payload: { title: string; body: string; tag: string }): Promise<number> {
   const vapid = { subject: env.VAPID_SUBJECT, publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY }
   const req = await buildPushPayload({ data: JSON.stringify(payload), options: { ttl: 3 * 3600, urgency: 'normal' } }, toSubscription(row), vapid)
   const res = await fetch(row.endpoint, req)
   if (res.status === 404 || res.status === 410) {
     await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').bind(row.endpoint).run()
-    return false
+  } else if (!res.ok) {
+    console.error('push failed', res.status, await res.text().catch(() => ''))
   }
-  if (!res.ok) console.error('push failed', res.status, await res.text().catch(() => ''))
-  return res.ok
+  return res.status
 }
 
 export async function subscriptionsFor(env: NotifyEnv, deviceId?: string): Promise<SubscriptionRow[]> {
@@ -170,7 +170,8 @@ export async function runNotifications(env: NotifyEnv, now = Date.now()) {
         .bind(`${sub.device_id}|${today}|${m.key}`, now)
         .run()
       if (claim.meta.changes !== 1) continue
-      if (!(await sendPush(env, sub, { title: m.title, body: m.body, tag: m.tag }))) break
+      const status = await sendPush(env, sub, { title: m.title, body: m.body, tag: m.tag })
+      if (status === 404 || status === 410) break
     }
   }
   await env.DB.prepare('DELETE FROM push_sent WHERE sent_at < ?').bind(now - 8 * 86_400_000).run()
