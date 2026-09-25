@@ -6,7 +6,11 @@
   "workers_dev": true,
   "observability": { "enabled": true },
   "vars": {
-    "ALLOWED_ORIGINS": "https://suyash503.github.io,http://localhost:5173"
+    "ALLOWED_ORIGINS": "https://suyash503.github.io,http://localhost:5173",
+    // Photo databases in order; new photos go to the last one. When it fills up,
+    // create identity-photos-N, add its binding below and append it here.
+    "PHOTO_SHARDS": "PHOTOS_1",
+    "PHOTO_SHARD_LIMIT_MB": "450"
   },
   "d1_databases": [
     {
@@ -14,8 +18,12 @@
       "database_name": "identity",
       "database_id": "f7e369fa-dd2c-4b3a-a298-a422f3d890b7",
       "migrations_dir": "migrations"
+    },
+    {
+      "binding": "PHOTOS_1",
+      "database_name": "identity-photos-1",
+      "database_id": "991f1d30-0ea4-4f89-9056-d65aef031ebb",
+      "migrations_dir": "migrations-photos"
     }
   ]
-  // Photos: add once R2 is enabled in the dashboard, then redeploy.
-  // "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "identity-photos" }]
 }

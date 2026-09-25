@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "wrangler deploy",
     "approve": "node scripts/approve.mjs",
-    "migrate": "wrangler d1 migrations apply identity --remote",
+    "migrate": "wrangler d1 migrations apply identity --remote && wrangler d1 migrations apply identity-photos-1 --remote",
     "types": "wrangler types",
     "check": "tsc"
   },

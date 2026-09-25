@@ -10,6 +10,8 @@ export interface CloudSyncState {
   photoStorage?: boolean
   photosSafe?: number
   photosPending?: number
+  photoBytes?: number
+  photoCapacity?: number
   /** A freshly paired, empty phone found an existing cloud backup: restore it instead of overwriting it. */
   needsRestore?: boolean
 }
@@ -85,7 +87,11 @@ async function doSync() {
   if (!token) return
   try {
     const manifest = await buildManifest()
-    const status = (await (await call('/v1/status', token)).json()) as { photoStorage: boolean; latest: { created_at: number } | null }
+    const status = (await (await call('/v1/status', token)).json()) as {
+      photoStorage: boolean
+      latest: { created_at: number } | null
+      photoCapacity: number
+    }
     const prevHash = (await db.settings.get('cloudHash'))?.value
 
     // A new or wiped phone must never replace the real backup with an empty one.
@@ -115,11 +121,14 @@ async function doSync() {
       }
     }
 
+    const after = (await (await call('/v1/status', token)).json()) as { photoBytes: number }
     await setSetting('cloudSync', {
       at: Date.now(),
       photoStorage: status.photoStorage,
       photosSafe: manifest.photos.length - pending,
       photosPending: pending,
+      photoBytes: after.photoBytes,
+      photoCapacity: status.photoCapacity,
     } satisfies CloudSyncState)
     // Only a backup with the photos counts as fully backed up.
     if (pending === 0) await setSetting('lastBackup', Date.now())

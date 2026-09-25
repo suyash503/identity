@@ -1,13 +1,12 @@
-// IDENTITY backup server: one user, a few paired phones, snapshots in D1, photos in R2 (once enabled).
+// IDENTITY backup server: one user, a few paired phones, snapshots in D1, photos in D1 photo databases.
 
-/** PHOTOS is optional so the server works before R2 is switched on. */
-type AppEnv = Env & { PHOTOS?: R2Bucket }
+type AppEnv = Env
 
 const PAIR_TTL_MS = 10 * 60_000
 const MAX_PENDING_PAIRINGS = 5
 const KEEP_SNAPSHOTS = 60
 const MAX_SNAPSHOT_BYTES = 1_900_000 // D1 rows top out at 2 MB
-const MAX_PHOTO_BYTES = 5_000_000
+const MAX_PHOTO_BYTES = 1_900_000 // D1 rows top out at 2 MB
 
 const json = (data: unknown, status = 200) => Response.json(data, { status })
 const error = (message: string, status: number) => json({ error: message }, status)
@@ -118,8 +117,17 @@ async function authenticate(req: Request, env: AppEnv): Promise<string | null> {
 
 async function status(env: AppEnv) {
   const latest = await env.DB.prepare('SELECT created_at, size FROM snapshots ORDER BY id DESC LIMIT 1').first<{ created_at: number; size: number }>()
-  const photos = await env.DB.prepare('SELECT COUNT(*) AS n FROM photos WHERE has_full = 1 AND has_thumb = 1').first<{ n: number }>()
-  return json({ photoStorage: !!env.PHOTOS, latest: latest ?? null, photos: photos?.n ?? 0 })
+  const photos = await env.DB.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(bytes), 0) AS bytes FROM photos WHERE has_full = 1 AND has_thumb = 1').first<{
+    n: number
+    bytes: number
+  }>()
+  return json({
+    photoStorage: shardNames(env).length > 0,
+    latest: latest ?? null,
+    photos: photos?.n ?? 0,
+    photoBytes: photos?.bytes ?? 0,
+    photoCapacity: shardNames(env).length * shardLimit(env),
+  })
 }
 
 async function putSnapshot(req: Request, env: AppEnv, deviceId: string) {
@@ -142,7 +150,15 @@ async function getSnapshot(env: AppEnv) {
   })
 }
 
-// ── Photos ──
+// ── Photos: bytes in D1 photo databases ("shards"), the index in the main database ──
+
+const shardNames = (env: AppEnv) => env.PHOTO_SHARDS.split(',').map((s) => s.trim()).filter(Boolean)
+const shardLimit = (env: AppEnv) => Number(env.PHOTO_SHARD_LIMIT_MB) * 1_048_576
+
+function shardDb(env: AppEnv, name: string): D1Database | undefined {
+  const binding = (env as unknown as Record<string, unknown>)[name] as D1Database | undefined
+  return typeof binding?.prepare === 'function' ? binding : undefined
+}
 
 async function listPhotos(env: AppEnv) {
   const { results } = await env.DB.prepare('SELECT key FROM photos WHERE has_full = 1 AND has_thumb = 1').all<{ key: string }>()
@@ -150,23 +166,35 @@ async function listPhotos(env: AppEnv) {
 }
 
 async function putPhoto(req: Request, env: AppEnv, key: string, kind: 'full' | 'thumb') {
-  if (!env.PHOTOS) return error('Photo storage is not enabled yet', 503)
   const data = await req.arrayBuffer()
   if (data.byteLength === 0 || data.byteLength > MAX_PHOTO_BYTES) return error('Bad photo size', 413)
-  await env.PHOTOS.put(`photos/${key}/${kind}.jpg`, data, { httpMetadata: { contentType: 'image/jpeg' } })
+
+  // Keep a photo's full and thumb together; new photos go to the newest photo database.
+  const existing = await env.DB.prepare('SELECT shard FROM photos WHERE key = ?').bind(key).first<{ shard: string | null }>()
+  const shard = existing?.shard ?? shardNames(env).at(-1)
+  const db = shard && shardDb(env, shard)
+  if (!db) return error('Photo storage is not set up', 503)
+
+  const used = await env.DB.prepare('SELECT COALESCE(SUM(bytes), 0) AS bytes FROM photos WHERE shard = ?').bind(shard).first<{ bytes: number }>()
+  if ((used?.bytes ?? 0) + data.byteLength > shardLimit(env)) return error('Cloud photo storage is full. A new photo database needs to be added.', 507)
+
+  await db.prepare('INSERT OR REPLACE INTO blobs (key, kind, data) VALUES (?, ?, ?)').bind(key, kind, data).run()
   const full = kind === 'full' ? 1 : 0
   await env.DB.prepare(
-    `INSERT INTO photos (key, has_full, has_thumb, uploaded_at) VALUES (?, ?, ?, ?)
-     ON CONFLICT (key) DO UPDATE SET has_full = max(has_full, excluded.has_full), has_thumb = max(has_thumb, excluded.has_thumb), uploaded_at = excluded.uploaded_at`,
+    `INSERT INTO photos (key, has_full, has_thumb, uploaded_at, shard, bytes) VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT (key) DO UPDATE SET has_full = max(has_full, excluded.has_full), has_thumb = max(has_thumb, excluded.has_thumb),
+       uploaded_at = excluded.uploaded_at, shard = excluded.shard, bytes = photos.bytes + excluded.bytes`,
   )
-    .bind(key, full, 1 - full, Date.now())
+    .bind(key, full, 1 - full, Date.now(), shard, data.byteLength)
     .run()
   return json({ ok: true })
 }
 
 async function getPhoto(env: AppEnv, key: string, kind: 'full' | 'thumb') {
-  if (!env.PHOTOS) return error('Photo storage is not enabled yet', 503)
-  const obj = await env.PHOTOS.get(`photos/${key}/${kind}.jpg`)
-  if (!obj) return error('Not found', 404)
-  return new Response(obj.body, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=31536000, immutable' } })
+  const row = await env.DB.prepare('SELECT shard FROM photos WHERE key = ?').bind(key).first<{ shard: string | null }>()
+  const db = row?.shard ? shardDb(env, row.shard) : undefined
+  if (!db) return error('Not found', 404)
+  const blob = await db.prepare('SELECT data FROM blobs WHERE key = ? AND kind = ?').bind(key, kind).first<{ data: ArrayBuffer | number[] }>()
+  if (!blob) return error('Not found', 404)
+  return new Response(new Uint8Array(blob.data), { headers: { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=31536000, immutable' } })
 }

@@ -7,6 +7,7 @@ import { SectionLabel } from './ui'
 
 type Pairing = { id: string; code: string; expiresAt: number }
 
+const mb = (bytes: number) => (bytes >= 1_048_576 * 100 ? `${Math.round(bytes / 1_048_576)} MB` : `${(bytes / 1_048_576).toFixed(1)} MB`)
 const time = (t: number) => new Date(t).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 export function CloudSection() {
@@ -125,8 +126,8 @@ function Connected() {
     : sync.needsRestore
       ? 'The cloud already has a backup and this phone is empty. Restore it to bring your history here.'
     : sync.photoStorage
-      ? `${sync.photosSafe ?? 0} photos safe`
-      : `History is safe. ${sync.photosPending ?? 0} photos wait for photo storage (R2) to be turned on.`
+      ? `History and ${sync.photosSafe ?? 0} photo${sync.photosSafe === 1 ? '' : 's'} safe · ${mb(sync.photoBytes ?? 0)} of ${mb(sync.photoCapacity ?? 0)} photo space used`
+      : `History is safe. ${sync.photosPending ?? 0} photos are waiting for cloud photo storage.`
 
   return (
     <>

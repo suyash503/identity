@@ -71,7 +71,7 @@ export function BackupSection() {
           </div>
           <div className="min-w-0">
             <div className="font-display text-xl font-bold uppercase leading-tight">{last ? `Backed up ${backupAgo(last)}` : 'Never backed up'}</div>
-            <div className="text-[13px] text-ink-3">Your photos and history live only on this phone.</div>
+            <div className="text-[13px] text-ink-3">A copy you keep yourself, e.g. in Google Drive.</div>
           </div>
         </div>
 
