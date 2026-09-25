@@ -234,5 +234,7 @@ export function taunt(ix: Index, rival: RivalMap, habits: Habit[], now: number):
   const gap = week.him - week.you
   if (gap >= 2) return pick([`${gap} battles up this week. Rest day again?`, 'I’m not tired. Are you?', `Up ${gap} this week and I haven’t even warmed up.`], r)
   if (gap <= -2) return pick([`You’re ${-gap} up this week. Enjoy it while it lasts.`, 'You out-worked me this week. Won’t happen twice.'], r)
+  if (gap === 1) return pick(['One up. I’ll take it.', 'Just one point in it. Mine, obviously.'], r)
+  if (gap === -1) return pick(['You’re one up. Barely.', 'One point? Cute. I’m coming.'], r)
   return pick(['Dead even. Let’s see who blinks.', 'New day. I’ve already started.', 'Every point counts. I’m counting.'], r)
 }
