@@ -15,6 +15,7 @@
   --color-danger: #ff3b5c;
   --color-ghost: #b9b4ea;
   --color-rival: #d946ef;
+  --color-glow: #1d1d33;
 
   --animate-danger-pulse: danger-pulse 2.2s ease-in-out infinite;
 
@@ -31,8 +32,19 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* A soft wash of the theme's colour across the top of the screen. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 55% at 50% -12%, color-mix(in oklab, var(--color-glow) 85%, transparent), transparent 70%);
+}
+
 body {
   margin: 0;
+  isolation: isolate;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);

@@ -14,6 +14,7 @@ import { RivalFeed } from './components/Rival'
 import { MissCheckin, type MissItem } from './components/MissCheckin'
 import { EveningCheckin } from './components/EveningCheckin'
 import { minutesInto } from './lib/day'
+import { applyTheme, rememberThemeChoice, resolveTheme } from './lib/theme'
 
 type Tab = 'today' | 'race' | 'patterns' | 'rituals'
 
@@ -25,7 +26,7 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
 ]
 
 export function App() {
-  const { ix, habits, misses, checkins, today, now } = useData()
+  const { ix, habits, misses, checkins, today, now, settings } = useData()
   const [tab, setTab] = useState<Tab>('today')
   const [ritualHabit, setRitualHabit] = useState<Habit | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -52,6 +53,14 @@ export function App() {
     }
   }, [eveningDue, checkin, ritualHabit])
 
+  // Theme: re-applied when the choice changes, and at the 4 AM rollover for "shuffle daily".
+  const themeChoice = settings.theme as string | undefined
+  useEffect(() => {
+    if (!themeChoice) return
+    applyTheme(resolveTheme(themeChoice, today))
+    rememberThemeChoice(themeChoice)
+  }, [themeChoice, today])
+
   const switchTab = (t: Tab) => {
     setTab(t)
     window.scrollTo({ top: 0 })
@@ -70,7 +79,7 @@ export function App() {
         </AnimatePresence>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-black/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl" aria-label="Main">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-bg/75 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl" aria-label="Main">
         <div className="mx-auto flex max-w-md px-3">
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id

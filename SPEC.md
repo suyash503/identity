@@ -11,7 +11,7 @@ A personal app for one user (me). It protects a daily **bare minimum** for each 
 1. **The minimum is the identity.** Every habit has a *full* version and a *bare minimum* version. Doing the minimum still counts as keeping the identity. The full version is a bonus.
 2. **Never miss twice.** One miss is normal. Two misses in a row is the real danger, and the app treats day 2 as an alarm.
 3. **Run from the past self.** Motivation comes from beating who I was, not from comparing myself to others. Every habit shows me racing a "ghost" of my past self.
-4. **Rituals, not checkboxes.** You complete a habit by taking a photo, not by ticking a box.
+4. **Rituals, not checkboxes.** Completing a habit is a deliberate hold-to-seal moment. A photo makes it a ritual, but it is optional (changed 2026-10-06: tasks are often logged hours later, when there is nothing to photograph).
 5. **Misses are data, not guilt.** Every miss asks one question: *what got in the way?* Over time these answers reveal triggers I can't see today.
 6. **Zero friction.** Logging a completion should take less than 10 seconds. If it's slow, I'll stop using it.
 
@@ -34,7 +34,7 @@ Each day, each habit ends in one of three states: **Full**, **Minimum** (both ke
 
 ## 3. Photo ritual
 
-- Completing a habit opens the camera directly. Snap, add an optional one-line caption, done.
+- Completing a habit offers Camera, Gallery or No photo (the last choice is remembered). Add an optional one-line caption and say when it was done (just now, N hours ago, or an exact time), then hold to seal. A photo can be added to a sealed habit later.
 - The photo is shown with the identity line: *"Day 142 · I'm someone who trains."* This is the moment I "vote" for my identity.
 - **Daily identity card:** a collage of that day's photos.
 - **Timeline:** scroll back through every ritual photo per habit.
@@ -141,5 +141,6 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 - 2026-09-25: No AI coach.
 - 2026-09-25: Visual quality is the top priority. Dark, athletic, premium look.
 - 2026-09-25: Skill = PyTorch. DSA on LeetCode. Android phone.
+- 2026-10-06: Photos optional for every habit, with a "when did you do it?" time so late logging keeps the patterns accurate. Six dark themes plus "shuffle daily".
 - 2026-09-25: Backend = Cloudflare Workers + D1. Chosen over Supabase for no pausing when inactive. Photos go in D1 "photo databases" (~450 MB each, up to ~4.5 GB free) instead of R2, because R2 requires a card on file.
 - 2026-09-25: Add rival "Alankrit": adaptive difficulty, runs alongside the ghost, light trash talk, live updates (in-app feed in Phase 1, push notifications in Phase 2).

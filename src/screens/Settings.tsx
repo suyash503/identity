@@ -8,6 +8,7 @@ import { syncGithub, type GithubSyncState } from '../lib/github'
 import { BackupSection } from '../components/BackupSection'
 import { CloudSection } from '../components/CloudSection'
 import { NotificationsSection } from '../components/NotificationsSection'
+import { ThemePicker } from '../components/ThemePicker'
 
 export function Settings({ onClose }: { onClose: () => void }) {
   const { habits, settings, ix } = useData()
@@ -46,6 +47,8 @@ export function Settings({ onClose }: { onClose: () => void }) {
           <HabitEditor key={h.id} habit={h} />
         ))}
       </div>
+
+      <ThemePicker />
 
       <NotificationsSection />
 

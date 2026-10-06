@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Camera, Check, GitCommitHorizontal, TriangleAlert } from 'lucide-react'
+import { Check, GitCommitHorizontal, TriangleAlert } from 'lucide-react'
 import type { Habit } from '../db'
 import { useData, usePhotoUrl } from '../data'
 import { alertOf, chainOf, isKept, logOf, missRun, statusOf } from '../lib/stats'
@@ -71,7 +71,7 @@ export function HabitCard({ habit, onOpen }: { habit: Habit; onOpen: () => void 
             className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 font-display text-[15px] font-bold uppercase tracking-[0.1em] text-black"
             style={{ background: accent }}
           >
-            <Camera size={17} strokeWidth={2.5} aria-hidden />
+            <Check size={17} strokeWidth={3} aria-hidden />
             {alert === 'none' ? 'Seal it' : 'Just the minimum'}
           </span>
         )}

@@ -10,6 +10,10 @@ import '@fontsource/barlow-condensed/800.css'
 import './index.css'
 import { DataProvider } from './data'
 import { App } from './App'
+import { applyTheme, resolveTheme, storedThemeChoice } from './lib/theme'
+
+// Before the first paint, so the app never flashes the wrong theme.
+applyTheme(resolveTheme(storedThemeChoice()))
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

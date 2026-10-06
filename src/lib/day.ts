@@ -73,3 +73,18 @@ export function fmtMinute(minute: number): string {
 export function monthKey(day: DayKey): string {
   return day.slice(0, 7)
 }
+
+/** The moment a day key begins (4 AM on its calendar date). */
+export function dayStartOf(day: DayKey): number {
+  const d = parseKey(day)
+  d.setHours(DAY_START_HOUR, 0, 0, 0)
+  return d.getTime()
+}
+
+/** "HH:MM" within a day key. Times before 4 AM belong to the night after the calendar date. */
+export function timeOnDay(day: DayKey, hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number)
+  const d = parseKey(h < DAY_START_HOUR ? addDays(day, 1) : day)
+  d.setHours(h, m, 0, 0)
+  return d.getTime()
+}

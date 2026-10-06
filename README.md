@@ -4,7 +4,8 @@ Do the bare minimum every day. The bare minimum is who you are.
 
 A personal, offline-first habit app (installable phone web app) built around:
 - **Bare minimum vs full** for each identity (Gym, DSA, GitHub, PyTorch)
-- **Photo ritual:** hold to seal each habit with a photo
+- **Seal ritual:** hold to seal each habit, with an optional photo and the time you actually did it
+- **Themes:** six dark themes, or a different one every day
 - **Never miss twice:** Danger Days, and chains that only break on two misses in a row
 - **Ghost race:** you vs last-week, last-month and last-quarter you
 - **Alankrit:** an adaptive rival who does the same habits, posts live updates and talks a little trash
