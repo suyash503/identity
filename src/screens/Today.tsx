@@ -5,6 +5,7 @@ import { useData } from '../data'
 import { HabitCard } from '../components/HabitCard'
 import { RivalCard } from '../components/Rival'
 import { BackupNudge } from '../components/BackupSection'
+import { CloudNudge } from '../components/CloudSection'
 import { Eyebrow, GHOST, SectionLabel, tint } from '../components/ui'
 import { fmtDay } from '../lib/day'
 import { alertOf, dayNumber, isKept, raceOf, statusOf } from '../lib/stats'
@@ -45,6 +46,7 @@ export function Today({ onOpenHabit, onOpenSettings, onOpenFeed }: { onOpenHabit
       </motion.div>
 
       <TodayHero />
+      <CloudNudge onOpen={onOpenSettings} />
       <BackupNudge onOpen={onOpenSettings} />
 
       <div className="mt-3">

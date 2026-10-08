@@ -141,6 +141,7 @@ These updates appear in a feed on the Today screen: *"Alankrit sealed Gym at 6:4
 - 2026-09-25: No AI coach.
 - 2026-09-25: Visual quality is the top priority. Dark, athletic, premium look.
 - 2026-09-25: Skill = PyTorch. DSA on LeetCode. Android phone.
+- 2026-10-08: The phone's storage was wiped twice (Sep 28, Oct 7), taking the cloud token with it. Added a recovery phrase (self-serve reconnect), a guard so a phone with less history never overwrites a bigger backup, "restore an older backup" with merge, a Today banner when not connected, and a storage-persistence request on every launch.
 - 2026-10-06: Photos optional for every habit, with a "when did you do it?" time so late logging keeps the patterns accurate. Six dark themes plus "shuffle daily".
 - 2026-09-25: Backend = Cloudflare Workers + D1. Chosen over Supabase for no pausing when inactive. Photos go in D1 "photo databases" (~450 MB each, up to ~4.5 GB free) instead of R2, because R2 requires a card on file.
 - 2026-09-25: Add rival "Alankrit": adaptive difficulty, runs alongside the ghost, light trash talk, live updates (in-app feed in Phase 1, push notifications in Phase 2).

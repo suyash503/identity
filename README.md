@@ -51,7 +51,11 @@ npm run deploy
 npm run approve -- 123456
 ```
 
-The phone gets its own token (only a hash is stored on the server), so no secrets are ever typed or copied. Snapshots are gzipped `backup.json`, and the newest 60 are kept. A freshly paired, empty phone never overwrites an existing backup; it offers to restore it instead.
+The phone gets its own token (only a hash is stored on the server), so no secrets are ever typed or copied. Snapshots are gzipped `backup.json`, and the newest 60 are kept.
+
+**If a phone's storage gets wiped:** set a **recovery phrase** once (Settings → Cloud backup). A wiped phone types it to reconnect itself, with no pairing code (wrong guesses: 5 an hour). A freshly connected phone with *less* history than the cloud never uploads over it; it offers a restore instead. **Restore from cloud** lists the recent backups with their seal counts, and restoring merges back anything that exists only on the phone.
+
+To test locally: `npx wrangler d1 migrations apply identity --local` (and `identity-photos-1`), `npx wrangler dev --local`, and put `VITE_CLOUD_URL=http://localhost:8787` in `.env.development.local`.
 
 **Photos** live in D1 "photo databases" (a free D1 database holds 500 MB; the Worker fills each to 450 MB). New photos go to the last one listed in `PHOTO_SHARDS`. When the app reports that cloud photo storage is full (about a year of photos per database):
 

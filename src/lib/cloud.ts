@@ -3,7 +3,7 @@ import { buildManifest, photoKey, replaceAllData, summarize, validateManifest, t
 import { addDays, dayKeyOf, type DayKey } from './day'
 
 /** The IDENTITY backup server (worker/). Not a secret: every request needs a paired device token. */
-export const CLOUD_URL = 'https://identity-api.suyashsingh2711.workers.dev'
+export const CLOUD_URL = (import.meta.env.VITE_CLOUD_URL as string | undefined) ?? 'https://identity-api.suyashsingh2711.workers.dev'
 /** Public half of the server's notification signing key. */
 const VAPID_PUBLIC_KEY = 'BObHkpu4AzcCF6O_50qx5zBvSrZAE2309fWGj-ndF9RAKwAU42oHXvtTs2tE8Rj_nYLsFy_0swnL9cuZG9PPycM'
 
@@ -15,8 +15,12 @@ export interface CloudSyncState {
   photosPending?: number
   photoBytes?: number
   photoCapacity?: number
-  /** A freshly paired, empty phone found an existing cloud backup: restore it instead of overwriting it. */
+  /** A freshly connected phone has less history than the cloud: restore instead of overwriting it. */
   needsRestore?: boolean
+  /** Seals in the cloud's newest backup, when needsRestore is set. */
+  cloudSeals?: number
+  /** A recovery phrase exists, so a wiped phone can reconnect without a pairing code. */
+  recoverySet?: boolean
 }
 
 class NotPaired extends Error {}
@@ -94,13 +98,23 @@ async function doSync() {
       photoStorage: boolean
       latest: { created_at: number } | null
       photoCapacity: number
+      recoverySet: boolean
     }
     const prevHash = (await db.settings.get('cloudHash'))?.value
 
-    // A new or wiped phone must never replace the real backup with an empty one.
-    if (!prevHash && manifest.logs.length === 0 && status.latest) {
-      await setSetting('cloudSync', { at: Date.now(), photoStorage: status.photoStorage, needsRestore: true } satisfies CloudSyncState)
-      return
+    // A new or wiped phone must never replace a bigger backup, even if it already has a seal or two.
+    if (!prevHash && status.latest) {
+      const cloud = await downloadSnapshot(token)
+      if (cloud.logs.length > manifest.logs.length) {
+        await setSetting('cloudSync', {
+          at: Date.now(),
+          photoStorage: status.photoStorage,
+          recoverySet: status.recoverySet,
+          needsRestore: true,
+          cloudSeals: cloud.logs.length,
+        } satisfies CloudSyncState)
+        return
+      }
     }
 
     const { exportedAt: _, ...content } = manifest
@@ -137,6 +151,7 @@ async function doSync() {
       photosPending: pending,
       photoBytes: after.photoBytes,
       photoCapacity: status.photoCapacity,
+      recoverySet: status.recoverySet,
     } satisfies CloudSyncState)
     // Only a backup with the photos counts as fully backed up.
     if (pending === 0) await setSetting('lastBackup', Date.now())
@@ -229,19 +244,56 @@ export async function sendTestPush() {
 
 // ── Restore ──
 
-export async function fetchCloudBackup(): Promise<{ manifest: Manifest; summary: BackupSummary }> {
-  const token = await getToken()
-  if (!token) throw new Error('This phone isn’t connected to the cloud.')
-  const res = await call('/v1/snapshot/latest', token)
+async function downloadSnapshot(token: string, id?: number): Promise<Manifest> {
+  const res = await call(id === undefined ? '/v1/snapshot/latest' : `/v1/snapshots/${id}`, token)
   const manifest = JSON.parse(await gunzip(await res.blob())) as Manifest
   validateManifest(manifest)
+  return manifest
+}
+
+async function requireToken(): Promise<string> {
+  const token = await getToken()
+  if (!token) throw new Error('This phone isn’t connected to the cloud.')
+  return token
+}
+
+export async function fetchCloudBackup(id?: number): Promise<{ manifest: Manifest; summary: BackupSummary }> {
+  const manifest = await downloadSnapshot(await requireToken(), id)
   return { manifest, summary: summarize(manifest) }
 }
 
+export interface CloudBackupEntry {
+  id: number
+  createdAt: number
+  summary: BackupSummary
+}
+
+/** The newest backups with what's in each, so an older, complete one can be picked. */
+export async function listCloudBackups(limit = 15): Promise<CloudBackupEntry[]> {
+  const token = await requireToken()
+  const rows = ((await (await call('/v1/snapshots', token)).json()) as { id: number; createdAt: number }[]).slice(0, limit)
+  return Promise.all(rows.map(async (r) => ({ id: r.id, createdAt: r.createdAt, summary: summarize(await downloadSnapshot(token, r.id)) })))
+}
+
+const dayKeyFor = (x: { habitId: string; day: DayKey }) => `${x.habitId}|${x.day}`
+
+/**
+ * Replaces this phone's data with a cloud backup. Seals, misses and check-ins that exist only on this phone
+ * (made after the backup) are kept and merged back in, so restoring never loses today's work.
+ */
 export async function restoreFromCloud(manifest: Manifest, onProgress?: (done: number, total: number) => void) {
-  const token = await getToken()
-  if (!token) throw new Error('This phone isn’t connected to the cloud.')
+  const token = await requireToken()
   const status = (await (await call('/v1/status', token)).json()) as { photoStorage: boolean }
+
+  // What only this phone has.
+  const inBackup = new Set(manifest.logs.map(dayKeyFor))
+  const localLogs = (await db.logs.toArray()).filter((l) => !inBackup.has(dayKeyFor(l)))
+  const localPhotos = new Map((await db.photos.bulkGet(localLogs.map((l) => l.photoId ?? -1))).filter((p) => p).map((p) => [p!.id!, p!]))
+  const missesInBackup = new Set(manifest.misses.map(dayKeyFor))
+  const localMisses = (await db.misses.toArray()).filter((m) => !missesInBackup.has(dayKeyFor(m)))
+  const checkinsInBackup = new Set((manifest.checkins ?? []).map((c) => c.day))
+  const localCheckins = (await db.checkins.toArray()).filter((c) => !checkinsInBackup.has(c.day))
+
   const photos: Photo[] = []
   if (status.photoStorage) {
     for (const [i, meta] of manifest.photos.entries()) {
@@ -258,4 +310,42 @@ export async function restoreFromCloud(manifest: Manifest, onProgress?: (done: n
   const restored = status.photoStorage ? manifest : { ...manifest, photos: [], logs: manifest.logs.map(({ photoId: _, ...l }) => l) }
   await replaceAllData(restored, photos)
   if (!status.photoStorage) await db.settings.delete('lastBackup')
+
+  // Merge back what only this phone had. New ids, so nothing collides with the backup's.
+  await db.transaction('rw', [db.logs, db.photos, db.misses, db.checkins], async () => {
+    for (const { id: _id, photoId, ...log } of localLogs) {
+      const photo = photoId !== undefined ? localPhotos.get(photoId) : undefined
+      const newPhotoId = photo ? await db.photos.add({ blob: photo.blob, thumb: photo.thumb, w: photo.w, h: photo.h, at: photo.at }) : undefined
+      await db.logs.add({ ...log, photoId: newPhotoId })
+    }
+    for (const { id: _id, ...m } of localMisses) await db.misses.add(m)
+    await db.checkins.bulkPut(localCheckins)
+  })
+  // The next sync uploads the merged result as the newest backup.
+  await db.settings.bulkDelete(['cloudHash', 'cloudStateHash'])
+  void syncCloud()
+}
+
+// ── Recovery phrase: a wiped phone reconnects itself ──
+
+export async function setRecoveryPhrase(phrase: string) {
+  await call('/v1/recovery', await requireToken(), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ passphrase: phrase }),
+  })
+  void syncCloud()
+}
+
+export async function recoverWithPhrase(phrase: string) {
+  const name = /Android/i.test(navigator.userAgent) ? 'Android phone' : 'Browser'
+  const res = await call('/v1/pair/recover', undefined, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ passphrase: phrase, name }),
+  })
+  const { token } = (await res.json()) as { token: string }
+  await setSetting('cloudToken', token)
+  await db.settings.bulkDelete(['cloudHash', 'cloudStateHash', 'cloudSync'])
+  await syncCloud()
 }

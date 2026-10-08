@@ -10,6 +10,8 @@ const KEEP_SNAPSHOTS = 60
 const MAX_SNAPSHOT_BYTES = 1_900_000 // D1 rows top out at 2 MB
 const MAX_PHOTO_BYTES = 1_900_000 // D1 rows top out at 2 MB
 const MAX_STATE_BYTES = 500_000
+const MIN_PHRASE_LENGTH = 10
+const MAX_RECOVERY_FAILS_PER_HOUR = 5
 
 const json = (data: unknown, status = 200) => Response.json(data, { status })
 const error = (message: string, status: number) => json({ error: message }, status)
@@ -60,6 +62,7 @@ async function route(req: Request, env: AppEnv): Promise<Response> {
   if (pathname === '/v1/pair/start' && method === 'POST') return pairStart(req, env)
   const pair = pathname.match(/^\/v1\/pair\/([a-f0-9]{32})$/)
   if (pair && method === 'GET') return pairPoll(pair[1], env)
+  if (pathname === '/v1/pair/recover' && method === 'POST') return recoverDevice(req, env)
 
   const deviceId = await authenticate(req, env)
   if (!deviceId) return error('This phone is not paired', 401)
@@ -67,6 +70,10 @@ async function route(req: Request, env: AppEnv): Promise<Response> {
   if (pathname === '/v1/status' && method === 'GET') return status(env)
   if (pathname === '/v1/snapshot' && method === 'POST') return putSnapshot(req, env, deviceId)
   if (pathname === '/v1/snapshot/latest' && method === 'GET') return getSnapshot(env)
+  if (pathname === '/v1/snapshots' && method === 'GET') return listSnapshots(env)
+  const snap = pathname.match(/^\/v1\/snapshots\/(\d{1,10})$/)
+  if (snap && method === 'GET') return getSnapshot(env, Number(snap[1]))
+  if (pathname === '/v1/recovery' && method === 'POST') return setRecovery(req, env)
   if (pathname === '/v1/photos' && method === 'GET') return listPhotos(env)
   const photo = pathname.match(/^\/v1\/photos\/([\w-]{1,64})\/(full|thumb)$/)
   if (photo && method === 'PUT') return putPhoto(req, env, photo[1], photo[2] as 'full' | 'thumb')
@@ -133,7 +140,9 @@ async function status(env: AppEnv) {
     n: number
     bytes: number
   }>()
+  const recovery = await env.DB.prepare('SELECT 1 AS ok FROM recovery WHERE id = 1').first()
   return json({
+    recoverySet: !!recovery,
     photoStorage: shardNames(env).length > 0,
     latest: latest ?? null,
     photos: photos?.n ?? 0,
@@ -154,9 +163,20 @@ async function putSnapshot(req: Request, env: AppEnv, deviceId: string) {
   return json({ ok: true, createdAt: now })
 }
 
-async function getSnapshot(env: AppEnv) {
-  const row = await env.DB.prepare('SELECT created_at, data FROM snapshots ORDER BY id DESC LIMIT 1').first<{ created_at: number; data: ArrayBuffer | number[] }>()
-  if (!row) return error('No backup yet', 404)
+async function listSnapshots(env: AppEnv) {
+  const { results } = await env.DB.prepare('SELECT id, created_at, size FROM snapshots ORDER BY id DESC LIMIT ?')
+    .bind(KEEP_SNAPSHOTS)
+    .all<{ id: number; created_at: number; size: number }>()
+  return json(results.map((r) => ({ id: r.id, createdAt: r.created_at, size: r.size })))
+}
+
+/** The newest snapshot, or a specific older one (for "restore an older backup"). */
+async function getSnapshot(env: AppEnv, id?: number) {
+  const row = await (id === undefined
+    ? env.DB.prepare('SELECT created_at, data FROM snapshots ORDER BY id DESC LIMIT 1')
+    : env.DB.prepare('SELECT created_at, data FROM snapshots WHERE id = ?').bind(id)
+  ).first<{ created_at: number; data: ArrayBuffer | number[] }>()
+  if (!row) return error(id === undefined ? 'No backup yet' : 'That backup no longer exists', 404)
   return new Response(new Uint8Array(row.data), {
     headers: { 'content-type': 'application/gzip', 'x-created-at': String(row.created_at), 'cache-control': 'no-store' },
   })
@@ -273,4 +293,43 @@ async function pushTest(env: AppEnv, deviceId: string) {
   for (const sub of subs) statuses.push(await sendPush(env, sub, { title: 'IDENTITY', body: 'Notifications work. Alankrit is watching.', tag: 'test' }))
   if (statuses.some((s) => s >= 200 && s < 300)) return json({ ok: true })
   return error(`The push service refused the test (HTTP ${statuses.join(', ')}). Turn notifications off and on again.`, 502)
+}
+
+// ── Recovery phrase ──
+
+async function setRecovery(req: Request, env: AppEnv) {
+  const body = (await req.json().catch(() => null)) as { passphrase?: unknown } | null
+  const phrase = typeof body?.passphrase === 'string' ? body.passphrase.trim() : ''
+  if (phrase.length < MIN_PHRASE_LENGTH) return error(`Use at least ${MIN_PHRASE_LENGTH} characters`, 400)
+  const salt = randomHex(16)
+  await env.DB.prepare('INSERT OR REPLACE INTO recovery (id, salt, hash, created_at) VALUES (1, ?, ?, ?)')
+    .bind(salt, await sha256(salt + phrase), Date.now())
+    .run()
+  return json({ ok: true })
+}
+
+/** A phone that lost its storage proves it's yours with the phrase and gets a fresh token. */
+async function recoverDevice(req: Request, env: AppEnv) {
+  const row = await env.DB.prepare('SELECT salt, hash FROM recovery WHERE id = 1').first<{ salt: string; hash: string }>()
+  if (!row) return error('No recovery phrase has been set up yet. Use a pairing code instead.', 404)
+
+  const hourAgo = Date.now() - 3_600_000
+  const fails = await env.DB.prepare('SELECT COUNT(*) AS n FROM recovery_attempts WHERE at > ?').bind(hourAgo).first<{ n: number }>()
+  if ((fails?.n ?? 0) >= MAX_RECOVERY_FAILS_PER_HOUR) return error('Too many wrong attempts. Try again in an hour.', 429)
+
+  const body = (await req.json().catch(() => null)) as { passphrase?: unknown; name?: unknown } | null
+  const phrase = typeof body?.passphrase === 'string' ? body.passphrase.trim() : ''
+  if (!phrase || (await sha256(row.salt + phrase)) !== row.hash) {
+    await env.DB.prepare('INSERT INTO recovery_attempts (at) VALUES (?)').bind(Date.now()).run()
+    return error('That recovery phrase is wrong', 403)
+  }
+
+  const name = typeof body?.name === 'string' && body.name.trim() ? body.name.trim().slice(0, 40) : 'Phone'
+  const token = randomHex(32)
+  const deviceId = randomHex(8)
+  await env.DB.batch([
+    env.DB.prepare('INSERT INTO devices (id, token_hash, name, created_at) VALUES (?, ?, ?, ?)').bind(deviceId, await sha256(token), name, Date.now()),
+    env.DB.prepare('DELETE FROM recovery_attempts'),
+  ])
+  return json({ token, deviceId })
 }
