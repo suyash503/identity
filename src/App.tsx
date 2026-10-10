@@ -15,6 +15,11 @@ import { MissCheckin, type MissItem } from './components/MissCheckin'
 import { EveningCheckin } from './components/EveningCheckin'
 import { minutesInto } from './lib/day'
 import { applyTheme, rememberThemeChoice, resolveTheme } from './lib/theme'
+import { isNative } from './lib/platform'
+import { closeTopLayer } from './lib/backStack'
+import { App as NativeApp } from '@capacitor/app'
+import { DEFAULT_PUSH_PREFS, type PushPrefs } from './lib/cloud'
+import { planNotifications, rescheduleNotifications } from './lib/localNotify'
 
 type Tab = 'today' | 'race' | 'patterns' | 'rituals'
 
@@ -26,7 +31,7 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
 ]
 
 export function App() {
-  const { ix, habits, misses, checkins, today, now, settings } = useData()
+  const { ix, habits, misses, checkins, today, now, settings, rival } = useData()
   const [tab, setTab] = useState<Tab>('today')
   const [ritualHabit, setRitualHabit] = useState<Habit | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -65,6 +70,25 @@ export function App() {
     setTab(t)
     window.scrollTo({ top: 0 })
   }
+
+  // Android back button: close the top layer, then go back to Today, then leave the app in the background.
+  useEffect(() => {
+    if (!isNative) return
+    const handle = NativeApp.addListener('backButton', () => {
+      if (closeTopLayer()) return
+      if (tab !== 'today') switchTab('today')
+      else void NativeApp.minimizeApp()
+    })
+    return () => void handle.then((h) => h.remove())
+  }, [tab])
+
+  // Android app: notifications are scheduled on the phone. Re-plan whenever anything that affects them changes.
+  const push = settings.push as { enabled: boolean; prefs: PushPrefs } | undefined
+  useEffect(() => {
+    if (!isNative || !push?.enabled) return
+    const id = setTimeout(() => void rescheduleNotifications(planNotifications(ix, habits, rival, push.prefs ?? DEFAULT_PUSH_PREFS)), 1500)
+    return () => clearTimeout(id)
+  }, [ix, habits, rival, push?.enabled, push?.prefs])
 
   return (
     <MotionConfig reducedMotion="user">

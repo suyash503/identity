@@ -5,6 +5,7 @@ import type { Log } from '../db'
 import { useData, usePhotoUrl } from '../data'
 import { Eyebrow, HabitIcon, LevelBadge, tint } from '../components/ui'
 import { fmtDay, relativeDay } from '../lib/day'
+import { useBackClose } from '../lib/backStack'
 
 export function Rituals() {
   const { habits, logs, today } = useData()
@@ -112,6 +113,7 @@ function Tile({ log, onOpen }: { log: Log; onOpen: () => void }) {
 }
 
 function Viewer({ log, onClose, onPrev, onNext }: { log: Log; onClose: () => void; onPrev?: () => void; onNext?: () => void }) {
+  useBackClose(onClose)
   const { habits, today } = useData()
   const habit = habits.find((h) => h.id === log.habitId)!
   const url = usePhotoUrl(log.photoId, 'blob')

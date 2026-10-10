@@ -5,6 +5,23 @@ import { useData } from '../data'
 import { DEFAULT_PUSH_PREFS, disablePush, enablePush, sendTestPush, type PushPrefs } from '../lib/cloud'
 import { RIVAL } from '../lib/alankrit'
 import { SectionLabel } from './ui'
+import { isNative } from '../lib/platform'
+import { cancelAllNotifications, requestNotificationPermission, sendTestNotification } from '../lib/localNotify'
+
+/** Android app: notifications are scheduled on the phone. Browser: the server sends web push. */
+async function turnOn(prefs: PushPrefs) {
+  if (!isNative) return enablePush(prefs)
+  if (!(await requestNotificationPermission())) throw new Error('Notifications are blocked. Allow them in Android settings → Apps → IDENTITY → Notifications.')
+  await setSetting('push', { enabled: true, prefs })
+}
+
+async function turnOff(prefs: PushPrefs) {
+  if (!isNative) return disablePush(prefs)
+  await cancelAllNotifications()
+  await setSetting('push', { enabled: false, prefs })
+}
+
+const test = () => (isNative ? sendTestNotification() : sendTestPush())
 
 const OPTIONS: { key: keyof PushPrefs; title: string; detail: string }[] = [
   { key: 'rival', title: `${RIVAL.name}’s moves`, detail: 'When he seals or skips a habit' },
@@ -17,7 +34,8 @@ export function NotificationsSection() {
   const push = settings.push as { enabled: boolean; prefs: PushPrefs } | undefined
   const enabled = !!push?.enabled
   const prefs = push?.prefs ?? DEFAULT_PUSH_PREFS
-  const paired = !!settings.cloudToken
+  // The browser version needs the server; the Android app doesn't.
+  const paired = isNative || !!settings.cloudToken
   const [busy, setBusy] = useState<string>()
   const [msg, setMsg] = useState<{ text: string; error?: boolean }>()
 
@@ -36,7 +54,7 @@ export function NotificationsSection() {
 
   const toggle = (key: keyof PushPrefs) => {
     const next = { ...prefs, [key]: !prefs[key] }
-    if (enabled) void run('Saving…', () => enablePush(next))
+    if (enabled) void run('Saving…', () => turnOn(next))
     else void setSetting('push', { enabled: false, prefs: next })
   }
 
@@ -53,7 +71,7 @@ export function NotificationsSection() {
           </div>
           <div className="min-w-0">
             <div className="font-display text-xl font-bold uppercase leading-tight">{enabled ? 'On' : 'Off'}</div>
-            <div className="text-[13px] text-ink-3">Sent by your server, even when the app is closed.</div>
+            <div className="text-[13px] text-ink-3">{isNative ? 'Scheduled on this phone, even when the app is closed.' : 'Sent by your server, even when the app is closed.'}</div>
           </div>
         </div>
 
@@ -63,7 +81,7 @@ export function NotificationsSection() {
           </p>
         ) : !enabled ? (
           <button
-            onClick={() => run('Turning on…', () => enablePush(prefs), 'Notifications are on.')}
+            onClick={() => run('Turning on…', () => turnOn(prefs), 'Notifications are on.')}
             disabled={!!busy}
             className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
           >
@@ -72,14 +90,14 @@ export function NotificationsSection() {
         ) : (
           <div className="mt-5 flex gap-3">
             <button
-              onClick={() => run('Sending…', sendTestPush, 'Test sent. It should arrive in a few seconds.')}
+              onClick={() => run('Sending…', test, 'Test sent. It should arrive in a few seconds.')}
               disabled={!!busy}
               className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-line text-sm font-semibold disabled:opacity-40"
             >
               <Send size={16} aria-hidden /> Send a test
             </button>
             <button
-              onClick={() => run('Turning off…', () => disablePush(prefs), 'Notifications are off.')}
+              onClick={() => run('Turning off…', () => turnOff(prefs), 'Notifications are off.')}
               disabled={!!busy}
               className="h-12 flex-1 rounded-full border border-line text-sm font-semibold text-ink-2 disabled:opacity-40"
             >

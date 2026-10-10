@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">IDENTITY</string>
+    <string name="title_activity_main">IDENTITY</string>
+    <string name="package_name">com.suyash.identity</string>
+    <string name="custom_url_scheme">com.suyash.identity</string>
+</resources>

@@ -11,6 +11,11 @@ import './index.css'
 import { DataProvider } from './data'
 import { App } from './App'
 import { applyTheme, resolveTheme, storedThemeChoice } from './lib/theme'
+import { isNative } from './lib/platform'
+import { registerSW } from 'virtual:pwa-register'
+
+// The offline service worker is for the browser version only.
+if (!isNative) registerSW({ immediate: true })
 
 // Before the first paint, so the app never flashes the wrong theme.
 applyTheme(resolveTheme(storedThemeChoice()))

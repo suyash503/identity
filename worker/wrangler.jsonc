@@ -6,7 +6,7 @@
   "workers_dev": true,
   "observability": { "enabled": true },
   "vars": {
-    "ALLOWED_ORIGINS": "https://suyash503.github.io,http://localhost:5173",
+    "ALLOWED_ORIGINS": "https://suyash503.github.io,http://localhost:5173,https://localhost",
     // Photo databases in order; new photos go to the last one. When it fills up,
     // create identity-photos-N, add its binding below and append it here.
     "PHOTO_SHARDS": "PHOTOS_1",

@@ -4,6 +4,7 @@ import { Braces, Dumbbell, Flame, GitCommitHorizontal, Link2, type LucideIcon } 
 import type { Habit, IconKey } from '../db'
 import { addDays, rangeKeys } from '../lib/day'
 import { statusOf, type DayStatus, type Index } from '../lib/stats'
+import { useBackClose } from '../lib/backStack'
 
 export const DANGER = '#ff3b5c'
 export const GHOST = '#b9b4ea'
@@ -127,6 +128,7 @@ export function Segmented<T extends string | number>({
 
 /** Full-screen layer used by the ritual flow, settings and the photo viewer. */
 export function Overlay({ children, onClose, label }: { children: ReactNode; onClose?: () => void; label: string }) {
+  useBackClose(onClose)
   return (
     <motion.div
       role="dialog"
@@ -147,6 +149,7 @@ export function Overlay({ children, onClose, label }: { children: ReactNode; onC
 }
 
 export function Sheet({ children, label, onClose }: { children: ReactNode; label: string; onClose: () => void }) {
+  useBackClose(onClose)
   return (
     <motion.div
       className="fixed inset-0 z-40 flex items-end justify-center"
