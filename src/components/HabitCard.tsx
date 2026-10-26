@@ -23,13 +23,8 @@ export function HabitCard({ habit, onOpen }: { habit: Habit; onOpen: () => void 
       layoutId={`card-${habit.id}`}
       onClick={onOpen}
       whileTap={{ scale: 0.98 }}
-      className={`relative w-full overflow-hidden rounded-[28px] border bg-surface p-5 text-left ${alert === 'none' ? 'border-line' : 'animate-danger-pulse border-transparent'}`}
+      className={`relative w-full overflow-hidden rounded-card border bg-surface p-5 text-left ${alert === 'none' ? 'border-line' : 'animate-danger-pulse border-transparent'}`}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-20 -top-24 size-56 rounded-full opacity-[0.18] blur-3xl"
-        style={{ background: accent }}
-      />
 
       {alert !== 'none' && (
         <div className="relative mb-4 flex items-center gap-2 font-display text-[13px] font-bold uppercase tracking-[0.18em] text-danger">
@@ -68,7 +63,7 @@ export function HabitCard({ habit, onOpen }: { habit: Habit; onOpen: () => void 
           </span>
         ) : (
           <span
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 font-display text-[15px] font-bold uppercase tracking-[0.1em] text-black"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-pill px-4 font-display text-[15px] font-bold uppercase tracking-[0.1em] text-black"
             style={{ background: accent }}
           >
             <Check size={17} strokeWidth={3} aria-hidden />
@@ -92,7 +87,7 @@ function SealedCard({ habit, onOpen }: { habit: Habit; onOpen: () => void }) {
       layoutId={`card-${habit.id}`}
       onClick={onOpen}
       whileTap={{ scale: 0.98 }}
-      className="relative h-44 w-full overflow-hidden rounded-[28px] bg-surface text-left"
+      className="relative h-44 w-full overflow-hidden rounded-card bg-surface text-left"
     >
       {url ? (
         <img src={url} alt="" className="absolute inset-0 size-full object-cover" />
@@ -102,9 +97,9 @@ function SealedCard({ habit, onOpen }: { habit: Habit; onOpen: () => void }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/5" />
       <div className="relative flex h-full flex-col justify-between p-5">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center rounded-full text-black" style={{ background: habit.color }}>
-              <Check size={16} strokeWidth={3.5} aria-hidden />
+          <div className="flex items-center gap-3">
+            <span className="stamp bg-black/40 text-[15px]" style={{ color: habit.color }}>
+              Sealed
             </span>
             <LevelBadge level={log.level} color={habit.color} />
           </div>
@@ -123,7 +118,7 @@ function SealedCard({ habit, onOpen }: { habit: Habit; onOpen: () => void }) {
           </div>
         </div>
       </div>
-      <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[28px]" style={{ boxShadow: `inset 0 0 0 1.5px ${tint(habit.color, 55)}` }} />
+      <div aria-hidden className="pointer-events-none absolute inset-0 rounded-card" style={{ boxShadow: `inset 0 0 0 1.5px ${tint(habit.color, 55)}` }} />
     </motion.button>
   )
 }

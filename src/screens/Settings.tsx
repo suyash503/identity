@@ -36,7 +36,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
   return (
     <Overlay label="Settings" onClose={onClose}>
       <div className="flex h-12 items-center">
-        <button onClick={onClose} aria-label="Back" className="-ml-2 grid size-11 place-items-center rounded-full text-ink-2 active:bg-surface-2">
+        <button onClick={onClose} aria-label="Back" className="-ml-2 grid size-11 place-items-center rounded-pill text-ink-2 active:bg-surface-2">
           <ArrowLeft size={24} />
         </button>
       </div>
@@ -54,7 +54,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
       <NotificationsSection />
 
       <SectionLabel>GitHub auto-seal</SectionLabel>
-      <div className="space-y-3 rounded-[24px] border border-line bg-surface p-5">
+      <div className="space-y-3 rounded-card border border-line bg-surface p-5">
         <Field
           label="Username"
           value={(settings.githubUser as string) ?? ''}
@@ -84,7 +84,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
           <button
             onClick={syncNow}
             disabled={!settings.githubUser || syncing}
-            className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-line px-4 text-sm font-semibold disabled:opacity-40"
+            className="flex h-11 shrink-0 items-center gap-2 rounded-pill border border-line px-4 text-sm font-semibold disabled:opacity-40"
           >
             <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} aria-hidden /> Sync now
           </button>
@@ -95,7 +95,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
       <BackupSection />
 
       <SectionLabel>Your data</SectionLabel>
-      <div className="divide-y divide-line rounded-[24px] border border-line bg-surface px-5">
+      <div className="divide-y divide-line rounded-card border border-line bg-surface px-5">
         <Row label="Day 1" value={fmtDay(ix.startDay, { day: 'numeric', month: 'long', year: 'numeric' })} />
         <Row label="Day ends at" value="4:00 AM" />
         <Row label="Stored on this phone" value={storage ? `${storage.usedMb.toFixed(1)} MB` : '—'} />
@@ -111,7 +111,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
 function HabitEditor({ habit }: { habit: Habit }) {
   const save = (field: 'identity' | 'minimum' | 'full') => (v: string) => v.trim() && db.habits.update(habit.id, { [field]: v.trim() })
   return (
-    <details className="group rounded-[24px] border border-line bg-surface">
+    <details className="group rounded-card border border-line bg-surface">
       <summary className="flex h-16 cursor-pointer list-none items-center gap-3 px-5">
         <span style={{ color: habit.color }}>
           <HabitIcon habit={habit} size={20} />
@@ -168,19 +168,19 @@ function DevTools() {
   }
   return (
     <>
-      <SectionLabel color="#ffc53d">Developer</SectionLabel>
+      <SectionLabel color="#c9a24a">Developer</SectionLabel>
       <div className="flex gap-3">
         <button
           disabled={busy}
           onClick={() => run(async () => (await import('../lib/demo')).loadDemo())}
-          className="h-12 flex-1 rounded-full border border-line text-sm font-semibold disabled:opacity-40"
+          className="h-12 flex-1 rounded-pill border border-line text-sm font-semibold disabled:opacity-40"
         >
           {busy ? 'Working…' : 'Load demo data'}
         </button>
         <button
           disabled={busy}
           onClick={() => run(async () => (await import('../lib/demo')).resetAll())}
-          className="h-12 flex-1 rounded-full border border-danger/50 text-sm font-semibold text-danger disabled:opacity-40"
+          className="h-12 flex-1 rounded-pill border border-danger/50 text-sm font-semibold text-danger disabled:opacity-40"
         >
           Reset everything
         </button>

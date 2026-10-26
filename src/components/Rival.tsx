@@ -17,9 +17,8 @@ export function RivalCard({ onOpen }: { onOpen: () => void }) {
     <motion.button
       onClick={onOpen}
       whileTap={{ scale: 0.98 }}
-      className="relative w-full overflow-hidden rounded-[28px] border border-line bg-surface p-5 text-left"
+      className="relative w-full overflow-hidden rounded-card border border-line bg-surface p-5 text-left"
     >
-      <div aria-hidden className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full opacity-[0.16] blur-3xl" style={{ background: RIVAL.color }} />
       <div className="relative flex items-center gap-3">
         <RivalAvatar />
         <div className="min-w-0 flex-1">
@@ -78,7 +77,7 @@ export function BattleBadge({ habit }: { habit: Habit }) {
   const label = o === 'win' ? 'Beating Alankrit' : o === 'draw' ? 'Tied' : 'Alankrit ahead'
   const color = o === 'win' ? habit.color : o === 'draw' ? 'var(--color-ink-2)' : RIVAL.color
   return (
-    <span className="rounded-full bg-black/50 px-2.5 py-1 font-display text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color }}>
+    <span className="rounded-pill bg-black/50 px-2.5 py-1 font-display text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color }}>
       {label}
     </span>
   )
@@ -105,7 +104,7 @@ export function RivalFeed({ onClose }: { onClose: () => void }) {
           <li key={f.key} className="flex gap-3 rounded-2xl px-2 py-3">
             <div className="w-16 shrink-0 pt-0.5 text-right font-display text-sm font-semibold tabular-nums text-ink-3">{fmtMinute(f.minute)}</div>
             <div className="relative flex flex-col items-center">
-              <span className="mt-1.5 size-2.5 rounded-full" style={{ background: f.who === 'rival' ? RIVAL.color : f.habit.color }} />
+              <span className="mt-1.5 size-2.5 rounded-pill" style={{ background: f.who === 'rival' ? RIVAL.color : f.habit.color }} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 font-display text-[13px] font-bold uppercase tracking-[0.16em]" style={{ color: f.who === 'rival' ? RIVAL.color : f.habit.color }}>

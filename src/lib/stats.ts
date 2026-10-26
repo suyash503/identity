@@ -1,5 +1,5 @@
 import type { Habit, Log, Miss } from '../db'
-import { addDays, diffDays, rangeKeys, type DayKey } from './day'
+import { addDays, diffDays, minutesInto, rangeKeys, weekdayIndex, type DayKey } from './day'
 
 export type DayStatus = 'full' | 'min' | 'missed' | 'pending' | 'none'
 export type Alert = 'none' | 'danger' | 'broken'
@@ -145,4 +145,68 @@ export function reasonCounts(misses: Miss[]): [string, number][] {
   const counts = new Map<string, number>()
   for (const m of misses) for (const r of m.reasons) counts.set(r, (counts.get(r) ?? 0) + 1)
   return [...counts.entries()].sort((a, b) => b[1] - a[1])
+}
+
+export interface HabitHistory {
+  /** Days since day 1, today included. */
+  days: number
+  kept: number
+  full: number
+  min: number
+  missed: number
+  /** Kept ÷ days that are over (today only counts once it's sealed). */
+  rate: number
+  chain: { links: number; cracks: number }
+  longest: number
+  thisMonth: number
+  /** Kept rate per weekday, Monday first; null when that weekday hasn't come round yet. */
+  weekdays: (number | null)[]
+  /** Median minute of the day you seal it by hand (ritual seals only). */
+  usualMinute?: number
+  reasons: [string, number][]
+  firstDay?: DayKey
+}
+
+export function habitHistory(ix: Index, habitId: string, misses: Miss[]): HabitHistory {
+  const days = rangeKeys(ix.startDay, ix.today)
+  let kept = 0
+  let full = 0
+  let missed = 0
+  let thisMonth = 0
+  const wdKept = Array(7).fill(0)
+  const wdTotal = Array(7).fill(0)
+  const times: number[] = []
+  let firstDay: DayKey | undefined
+  for (const d of days) {
+    const s = statusOf(ix, habitId, d)
+    if (s === 'pending') continue
+    const wd = weekdayIndex(d)
+    wdTotal[wd]++
+    if (isKept(s)) {
+      kept++
+      wdKept[wd]++
+      if (s === 'full') full++
+      if (d.slice(0, 7) === ix.today.slice(0, 7)) thisMonth++
+      firstDay ??= d
+      const log = logOf(ix, habitId, d)!
+      if (log.source === 'ritual') times.push(minutesInto(d, log.at))
+    } else if (s === 'missed') missed++
+  }
+  const counted = kept + missed
+  times.sort((a, b) => a - b)
+  return {
+    days: days.length,
+    kept,
+    full,
+    min: kept - full,
+    missed,
+    rate: counted ? kept / counted : 0,
+    chain: chainOf(ix, habitId),
+    longest: longestChain(ix, habitId),
+    thisMonth,
+    weekdays: wdTotal.map((t, i) => (t ? wdKept[i] / t : null)),
+    usualMinute: times.length >= 3 ? times[Math.floor(times.length / 2)] : undefined,
+    reasons: reasonCounts(misses.filter((m) => m.habitId === habitId && statusOf(ix, habitId, m.day) === 'missed')),
+    firstDay,
+  }
 }

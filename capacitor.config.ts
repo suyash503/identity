@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'IDENTITY',
   webDir: 'dist',
   // The app's pages load from https://localhost inside the app, so the backup server must allow that origin.
-  android: { backgroundColor: '#000000' },
+  android: { backgroundColor: '#12100d' },
   plugins: {
     LocalNotifications: { smallIcon: 'ic_stat_identity', iconColor: '#f5f5f7' },
   },

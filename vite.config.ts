@@ -19,8 +19,8 @@ export default defineConfig({
         name: 'IDENTITY',
         short_name: 'IDENTITY',
         description: 'Do the bare minimum every day. The bare minimum is who you are.',
-        theme_color: '#000000',
-        background_color: '#000000',
+        theme_color: '#12100d',
+        background_color: '#12100d',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

@@ -1,5 +1,5 @@
 import { strFromU8, strToU8, unzip, zip, type Unzipped, type Zippable } from 'fflate'
-import { db, type CheckIn, type Habit, type Log, type Miss, type Photo, type RivalDay, type Setting } from '../db'
+import { db, withVintageColor, type CheckIn, type Habit, type Log, type Miss, type Photo, type RivalDay, type Setting } from '../db'
 import { dayKeyOf, type DayKey } from './day'
 
 const FORMAT = 'identity-backup'
@@ -127,7 +127,7 @@ export async function replaceAllData(manifest: Manifest, photos: Photo[]) {
   await db.transaction('rw', tables, async () => {
     const keep = (await db.settings.toArray()).filter((s) => LOCAL_ONLY.has(s.key) && s.key !== 'lastBackup')
     await Promise.all(tables.map((t) => t.clear()))
-    await db.habits.bulkAdd(manifest.habits)
+    await db.habits.bulkAdd(manifest.habits.map(withVintageColor))
     await db.logs.bulkAdd(manifest.logs)
     await db.photos.bulkAdd(photos)
     await db.misses.bulkAdd(manifest.misses)

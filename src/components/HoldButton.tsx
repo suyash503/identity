@@ -47,7 +47,7 @@ export function HoldButton({ color, label, onDone, disabled }: { color: string; 
       onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && !e.repeat && (e.preventDefault(), start())}
       onKeyUp={(e) => (e.key === ' ' || e.key === 'Enter') && stop()}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative h-16 w-full touch-none select-none overflow-hidden rounded-full border font-display text-lg font-bold uppercase tracking-[0.2em] disabled:opacity-40"
+      className="relative h-16 w-full touch-none select-none overflow-hidden rounded-pill border font-display text-lg font-bold uppercase tracking-[0.2em] disabled:opacity-40"
       style={{ borderColor: color, color: progress > 0.5 ? '#000' : color }}
       aria-label={`${label} (press and hold)`}
     >

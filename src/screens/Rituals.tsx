@@ -33,7 +33,7 @@ export function Rituals() {
       </p>
 
       <div className="no-scrollbar -mx-5 mt-6 flex gap-2 overflow-x-auto px-5" role="tablist">
-        {[{ id: 'all', name: 'All', color: '#f5f5f7' }, ...habits].map((h) => {
+        {[{ id: 'all', name: 'All', color: 'var(--color-ink)' }, ...habits].map((h) => {
           const active = filter === h.id
           return (
             <button
@@ -41,10 +41,10 @@ export function Rituals() {
               role="tab"
               aria-selected={active}
               onClick={() => setFilter(h.id)}
-              className="flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 font-display text-[15px] font-semibold uppercase tracking-[0.12em]"
+              className="flex h-11 shrink-0 items-center gap-2 rounded-pill border px-4 font-display text-[15px] font-semibold uppercase tracking-[0.12em]"
               style={active ? { background: h.color, borderColor: h.color, color: '#000' } : { borderColor: 'var(--color-line)', color: 'var(--color-ink-2)' }}
             >
-              {h.id !== 'all' && <span className="size-2 rounded-full" style={{ background: active ? '#000' : h.color }} />}
+              {h.id !== 'all' && <span className="size-2 rounded-pill" style={{ background: active ? '#000' : h.color }} />}
               {h.name}
             </button>
           )
@@ -53,7 +53,7 @@ export function Rituals() {
 
       {byDay.length === 0 ? (
         <div className="mt-16 flex flex-col items-center text-center">
-          <div className="grid size-16 place-items-center rounded-full bg-surface-2 text-ink-3">
+          <div className="grid size-16 place-items-center rounded-pill bg-surface-2 text-ink-3">
             <Camera size={28} aria-hidden />
           </div>
           <p className="mt-4 font-display text-2xl font-bold uppercase">No rituals yet</p>
@@ -138,17 +138,17 @@ function Viewer({ log, onClose, onPrev, onNext }: { log: Log; onClose: () => voi
           onClick={onClose}
           aria-label="Close"
           autoFocus
-          className="absolute right-4 top-[calc(env(safe-area-inset-top)+12px)] grid size-11 place-items-center rounded-full bg-black/60 text-ink backdrop-blur"
+          className="absolute right-4 top-[calc(env(safe-area-inset-top)+12px)] grid size-11 place-items-center rounded-pill bg-black/60 text-ink backdrop-blur"
         >
           <X size={22} />
         </button>
         {onPrev && (
-          <button onClick={onPrev} aria-label="Newer photo" className="absolute left-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/50 backdrop-blur">
+          <button onClick={onPrev} aria-label="Newer photo" className="absolute left-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-pill bg-black/50 backdrop-blur">
             <ChevronLeft size={24} />
           </button>
         )}
         {onNext && (
-          <button onClick={onNext} aria-label="Older photo" className="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/50 backdrop-blur">
+          <button onClick={onNext} aria-label="Older photo" className="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-pill bg-black/50 backdrop-blur">
             <ChevronRight size={24} />
           </button>
         )}

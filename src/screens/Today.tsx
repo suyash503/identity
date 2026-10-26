@@ -31,7 +31,7 @@ export function Today({ onOpenHabit, onOpenSettings, onOpenFeed }: { onOpenHabit
         <button
           onClick={onOpenSettings}
           aria-label="Settings"
-          className="grid size-11 place-items-center rounded-full border border-line bg-surface text-ink-2 active:bg-surface-2"
+          className="grid size-11 place-items-center rounded-pill border border-line bg-surface text-ink-2 active:bg-surface-2"
         >
           <Settings2 size={20} />
         </button>
@@ -93,7 +93,7 @@ function TodayHero() {
   const ahead = race.lead >= 0
 
   return (
-    <section className="relative mt-8 overflow-hidden rounded-[32px] border border-line bg-surface p-5">
+    <section className="relative mt-8 overflow-hidden rounded-card border border-line bg-surface p-5">
       <div className="flex items-end justify-between gap-4">
         <div>
           <Eyebrow>Kept today</Eyebrow>
@@ -116,7 +116,7 @@ function TodayHero() {
           return (
             <motion.div
               key={h.id}
-              className="h-2.5 rounded-full"
+              className="h-2.5 rounded-pill"
               initial={false}
               animate={{
                 background: s === 'full' ? h.color : s === 'min' ? tint(h.color, 55) : 'var(--color-surface-3)',
@@ -132,17 +132,22 @@ function TodayHero() {
 }
 
 function Wordmark() {
+  const { ix } = useData()
   return (
     <div className="flex items-center gap-2.5">
-      <svg viewBox="0 0 64 64" className="size-7" aria-hidden>
-        <rect x="30" y="8" width="14" height="36" rx="2" fill={GHOST} opacity=".3" />
-        <rect x="24" y="8" width="14" height="36" rx="2" fill="#f5f5f7" />
-        <rect x="14" y="50" width="8" height="8" rx="1.5" fill="#5b9dff" />
-        <rect x="25" y="50" width="8" height="8" rx="1.5" fill="#ffc53d" />
-        <rect x="36" y="50" width="8" height="8" rx="1.5" fill="#39d353" />
-        <rect x="47" y="50" width="8" height="8" rx="1.5" fill="#ff7a45" />
+      <svg viewBox="0 0 64 64" className="size-8" aria-hidden>
+        <rect x="30" y="8" width="14" height="36" rx="1" fill={GHOST} opacity=".3" />
+        <rect x="24" y="8" width="14" height="36" rx="1" fill="var(--color-ink)" />
+        {habitSwatches.map((c, i) => (
+          <rect key={c} x={14 + i * 11} y="50" width="8" height="8" rx="1" fill={c} />
+        ))}
       </svg>
-      <span className="font-display text-[17px] font-bold tracking-[0.32em]">IDENTITY</span>
+      <div className="leading-none">
+        <div className="font-display text-[20px] font-black tracking-[0.26em]">IDENTITY</div>
+        <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.28em] text-ink-3">Training log · est. {ix.startDay.slice(0, 4)}</div>
+      </div>
     </div>
   )
 }
+
+const habitSwatches = ['#c8573e', '#d9a441', '#8fa84f', '#5f9e97']

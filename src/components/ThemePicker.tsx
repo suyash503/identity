@@ -47,7 +47,6 @@ function Swatch({ theme, selected, onPick }: { theme: Theme; selected: boolean; 
       className="relative overflow-hidden rounded-2xl p-2.5 text-left"
       style={{ background: v.bg, boxShadow: `inset 0 0 0 ${selected ? 2 : 1}px ${selected ? v.ink : v.line}` }}
     >
-      <div aria-hidden className="absolute -left-4 -top-6 size-20 rounded-full opacity-70 blur-2xl" style={{ background: theme.glow }} />
       <div className="relative space-y-1.5">
         <div className="h-5 rounded-md" style={{ background: v.surface2 }} />
         <div className="flex gap-1">

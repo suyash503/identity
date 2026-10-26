@@ -13,7 +13,7 @@ import { RitualFlow } from './components/RitualFlow'
 import { RivalFeed } from './components/Rival'
 import { MissCheckin, type MissItem } from './components/MissCheckin'
 import { EveningCheckin } from './components/EveningCheckin'
-import { minutesInto } from './lib/day'
+import { minutesInto, type DayKey } from './lib/day'
 import { applyTheme, rememberThemeChoice, resolveTheme } from './lib/theme'
 import { isNative } from './lib/platform'
 import { closeTopLayer } from './lib/backStack'
@@ -33,7 +33,8 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
 export function App() {
   const { ix, habits, misses, checkins, today, now, settings, rival } = useData()
   const [tab, setTab] = useState<Tab>('today')
-  const [ritualHabit, setRitualHabit] = useState<Habit | null>(null)
+  const [ritual, setRitual] = useState<{ habit: Habit; day?: DayKey } | null>(null)
+  const ritualHabit = ritual?.habit
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [feedOpen, setFeedOpen] = useState(false)
   const [checkin, setCheckin] = useState<MissItem[] | null>(null)
@@ -95,7 +96,7 @@ export function App() {
       <main className="mx-auto min-h-dvh max-w-md pb-[calc(env(safe-area-inset-bottom)+96px)]">
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            {tab === 'today' && <Today onOpenHabit={setRitualHabit} onOpenSettings={() => setSettingsOpen(true)} onOpenFeed={() => setFeedOpen(true)} />}
+            {tab === 'today' && <Today onOpenHabit={(habit) => setRitual({ habit })}onOpenSettings={() => setSettingsOpen(true)} onOpenFeed={() => setFeedOpen(true)} />}
             {tab === 'race' && <Race />}
             {tab === 'patterns' && <Patterns onOpenCheckin={() => setEvening(true)} />}
             {tab === 'rituals' && <Rituals />}
@@ -124,11 +125,23 @@ export function App() {
       </nav>
 
       <AnimatePresence>
-        {ritualHabit && <RitualFlow key={ritualHabit.id} habit={ritualHabit} onClose={() => setRitualHabit(null)} />}
+        {ritual && <RitualFlow key={`${ritual.habit.id}|${ritual.day ?? ''}`} habit={ritual.habit} day={ritual.day} onClose={() => setRitual(null)} />}
       </AnimatePresence>
       <AnimatePresence>{settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}</AnimatePresence>
       <AnimatePresence>{feedOpen && <RivalFeed onClose={() => setFeedOpen(false)} />}</AnimatePresence>
-      <AnimatePresence>{checkin && !ritualHabit && <MissCheckin items={checkin} onDone={() => setCheckin(null)} />}</AnimatePresence>
+      <AnimatePresence>
+        {checkin && !ritualHabit && (
+          <MissCheckin
+            items={checkin}
+            onDone={() => setCheckin(null)}
+            onDidIt={(item, rest) => {
+              // The rest of the misses are asked about once the late seal is done.
+              setCheckin(rest.length ? rest : null)
+              setRitual({ habit: item.habit, day: item.day })
+            }}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>{evening && !checkin && !ritualHabit && <EveningCheckin onDone={() => setEvening(false)} />}</AnimatePresence>
     </MotionConfig>
   )

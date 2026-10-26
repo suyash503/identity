@@ -63,7 +63,7 @@ export function EveningCheckin({ onDone }: { onDone: () => void }) {
                 role="radio"
                 aria-checked={on}
                 onClick={() => setSleep(o.value)}
-                className={`h-11 rounded-full border px-4 text-[15px] transition-colors ${on ? 'border-ink bg-ink font-semibold text-black' : 'border-line bg-surface-2 text-ink'}`}
+                className={`h-11 rounded-pill border px-4 text-[15px] transition-colors ${on ? 'border-ink bg-ink font-semibold text-black' : 'border-line bg-surface-2 text-ink'}`}
               >
                 {o.label}
               </button>
@@ -73,13 +73,13 @@ export function EveningCheckin({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="mt-7 flex gap-3">
-        <button onClick={() => save(true)} className="h-14 flex-1 rounded-full border border-line font-display text-base font-bold uppercase tracking-[0.14em] text-ink-2">
+        <button onClick={() => save(true)} className="h-14 flex-1 rounded-pill border border-line font-display text-base font-bold uppercase tracking-[0.14em] text-ink-2">
           Skip
         </button>
         <button
           onClick={() => save()}
           disabled={energy === undefined && sleep === undefined}
-          className="h-14 flex-[2] rounded-full bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-30"
+          className="h-14 flex-[2] rounded-pill bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-30"
         >
           Save
         </button>

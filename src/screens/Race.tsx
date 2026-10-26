@@ -50,7 +50,7 @@ function GhostView() {
         <Segmented<number> id="period" value={periodIdx} onChange={setPeriodIdx} options={PERIODS.map((p, i) => ({ value: i, label: p.label }))} />
       </div>
 
-      <section className="mt-5 rounded-[32px] border border-line bg-surface p-5">
+      <section className="mt-5 rounded-card border border-line bg-surface p-5">
         <div className="flex items-end gap-3">
           <motion.div
             key={`${period.days}-${overall.lead}`}
@@ -68,7 +68,7 @@ function GhostView() {
           </div>
         </div>
         <div className="mt-6">
-          <Track you={overall.you} ghost={overall.ghost} max={overall.max} color="#f5f5f7" />
+          <Track you={overall.you} ghost={overall.ghost} max={overall.max} color="var(--color-ink)" />
         </div>
         <div className="mt-3 flex justify-between text-[13px] text-ink-3">
           <span>
@@ -90,7 +90,7 @@ function GhostView() {
         {habits.map((h) => {
           const r = raceOf(ix, [h.id], period.days)
           return (
-            <div key={h.id} className="rounded-[24px] border border-line bg-surface px-5 py-4">
+            <div key={h.id} className="rounded-card border border-line bg-surface px-5 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2" style={{ color: h.color }}>
                   <HabitIcon habit={h} size={18} />
@@ -131,17 +131,17 @@ function Track({ you, ghost, max, color, small }: { you: number; ghost: number; 
   const dot = small ? 'size-5' : 'size-7'
   return (
     <div className={`relative mx-3 ${small ? 'h-6' : 'h-9'}`} role="img" aria-label={`You ${you}, ghost ${ghost}, out of ${max}`}>
-      <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-3" />
+      <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-pill bg-surface-3" />
       <motion.div
-        className="absolute left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full"
+        className="absolute left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-pill"
         style={{ background: color }}
         initial={{ width: 0 }}
         animate={{ width: pct(you) }}
         transition={{ type: 'spring', stiffness: 120, damping: 20 }}
       />
       <motion.div
-        className={`absolute top-1/2 grid ${dot} -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-dashed`}
-        style={{ borderColor: GHOST, background: 'rgb(185 180 234 / .12)', color: GHOST }}
+        className={`absolute top-1/2 grid ${dot} -translate-x-1/2 -translate-y-1/2 place-items-center rounded-[50%] border border-dashed`}
+        style={{ borderColor: GHOST, background: 'rgb(169 185 198 / .12)', color: GHOST }}
         initial={{ left: 0 }}
         animate={{ left: pct(ghost) }}
         transition={{ type: 'spring', stiffness: 120, damping: 20 }}
@@ -149,7 +149,7 @@ function Track({ you, ghost, max, color, small }: { you: number; ghost: number; 
         <Ghost size={small ? 11 : 15} aria-hidden />
       </motion.div>
       <motion.div
-        className={`absolute top-1/2 ${dot} -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-black`}
+        className={`absolute top-1/2 ${dot} -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[3px] border-black`}
         style={{ background: color, boxShadow: `0 0 16px -2px ${color}` }}
         initial={{ left: 0 }}
         animate={{ left: pct(you) }}
@@ -165,7 +165,7 @@ function Heatmap({ habit }: { habit: Habit }) {
   const start = addDays(ix.today, -((weeks - 1) * 7 + weekdayIndex(ix.today)))
   const days = rangeKeys(start, addDays(start, weeks * 7 - 1))
   return (
-    <div className="rounded-[24px] border border-line bg-surface p-4">
+    <div className="rounded-card border border-line bg-surface p-4">
       <div className="mb-3 flex items-center gap-2" style={{ color: habit.color }}>
         <HabitIcon habit={habit} size={16} />
         <span className="font-display text-base font-bold uppercase tracking-wide text-ink">{habit.name}</span>
@@ -180,7 +180,7 @@ function Heatmap({ habit }: { habit: Habit }) {
 }
 
 function Legend() {
-  const c = '#a8a8b3'
+  const c = 'var(--color-ink-2)'
   return (
     <div className="flex flex-wrap gap-4 px-1 text-[12px] text-ink-3">
       {(
@@ -202,7 +202,7 @@ function Legend() {
 
 function StatTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[22px] border border-line bg-surface px-4 py-4">
+    <div className="rounded-card border border-line bg-surface px-4 py-4">
       <div className="font-display text-[40px] font-extrabold leading-none tabular-nums">{value}</div>
       <div className="mt-2 text-[12px] uppercase tracking-[0.12em] text-ink-3">{label}</div>
     </div>
@@ -223,8 +223,7 @@ function RivalView() {
 
   return (
     <>
-      <section className="relative mt-5 overflow-hidden rounded-[32px] border border-line bg-surface p-5">
-        <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-60 rounded-full opacity-[0.15] blur-3xl" style={{ background: RIVAL.color }} />
+      <section className="relative mt-5 overflow-hidden rounded-card border border-line bg-surface p-5">
         <Eyebrow>Season · {fmtDay(ix.today, { month: 'long' })}</Eyebrow>
         <Scoreboard score={season} big />
         <p className="mt-4 text-[14px] text-ink-2">
@@ -242,7 +241,7 @@ function RivalView() {
           const s = scoreIn(ix, rival, [h.id], wk, ix.today, now)
           const total = Math.max(1, s.you + s.him)
           return (
-            <div key={h.id} className="rounded-[24px] border border-line bg-surface px-5 py-4">
+            <div key={h.id} className="rounded-card border border-line bg-surface px-5 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2" style={{ color: h.color }}>
                   <HabitIcon habit={h} size={18} />
@@ -254,10 +253,10 @@ function RivalView() {
                   <span style={{ color: RIVAL.color }}>{s.him}</span>
                 </div>
               </div>
-              <div className="mt-3 flex h-2.5 gap-1 overflow-hidden rounded-full bg-surface-3">
-                <motion.div className="h-full rounded-full" style={{ background: h.color }} initial={{ width: 0 }} animate={{ width: `${(s.you / total) * 100}%` }} />
+              <div className="mt-3 flex h-2.5 gap-1 overflow-hidden rounded-pill bg-surface-3">
+                <motion.div className="h-full rounded-pill" style={{ background: h.color }} initial={{ width: 0 }} animate={{ width: `${(s.you / total) * 100}%` }} />
                 <div className="flex-1" />
-                <motion.div className="h-full rounded-full" style={{ background: RIVAL.color }} initial={{ width: 0 }} animate={{ width: `${(s.him / total) * 100}%` }} />
+                <motion.div className="h-full rounded-pill" style={{ background: RIVAL.color }} initial={{ width: 0 }} animate={{ width: `${(s.him / total) * 100}%` }} />
               </div>
               <div className="mt-2 text-[12px] text-ink-3">{s.draws} draw{s.draws === 1 ? '' : 's'} · Full beats minimum, minimum beats a miss</div>
             </div>
@@ -266,7 +265,7 @@ function RivalView() {
       </div>
 
       <SectionLabel>All-time</SectionLabel>
-      <div className="rounded-[24px] border border-line bg-surface p-5">
+      <div className="rounded-card border border-line bg-surface p-5">
         <Scoreboard score={allTime} />
         <div className="mt-3 text-[13px] text-ink-3">
           Since Day 1 · {allTime.draws} draws · seasons won: you {winsYou}, {RIVAL.name} {winsHim}
@@ -278,12 +277,12 @@ function RivalView() {
           <SectionLabel>Trophy cabinet</SectionLabel>
           <div className="space-y-2">
             {seasons.map((s) => (
-              <div key={s.month} className="flex items-center gap-4 rounded-[20px] border border-line bg-surface px-4 py-3">
+              <div key={s.month} className="flex items-center gap-4 rounded-card border border-line bg-surface px-4 py-3">
                 <div
                   className="grid size-11 place-items-center rounded-2xl"
                   style={{
-                    background: s.winner === 'you' ? 'rgb(255 197 61 / .14)' : 'var(--color-surface-2)',
-                    color: s.winner === 'you' ? '#ffc53d' : 'var(--color-ink-3)',
+                    background: s.winner === 'you' ? 'rgb(201 162 74 / .14)' : 'var(--color-surface-2)',
+                    color: s.winner === 'you' ? '#c9a24a' : 'var(--color-ink-3)',
                   }}
                 >
                   {s.winner === 'rival' ? <RivalAvatar size={26} /> : <Trophy size={20} aria-hidden />}

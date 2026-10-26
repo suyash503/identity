@@ -61,11 +61,11 @@ export function BackupSection() {
   return (
     <>
       <SectionLabel color={overdue ? 'var(--color-danger)' : undefined}>Backup file</SectionLabel>
-      <div className="rounded-[24px] border border-line bg-surface p-5">
+      <div className="rounded-card border border-line bg-surface p-5">
         <div className="flex items-center gap-3">
           <div
             className="grid size-12 shrink-0 place-items-center rounded-2xl"
-            style={safe ? { background: 'rgb(57 211 83 / .12)', color: '#39d353' } : { background: 'rgb(255 59 92 / .14)', color: 'var(--color-danger)' }}
+            style={safe ? { background: 'rgb(143 168 79 / .12)', color: '#8fa84f' } : { background: 'rgb(217 83 59 / .14)', color: 'var(--color-danger)' }}
           >
             <StatusIcon size={24} aria-hidden />
           </div>
@@ -78,7 +78,7 @@ export function BackupSection() {
         <button
           onClick={backup}
           disabled={!!busy}
-          className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
+          className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-pill bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
         >
           <CloudUpload size={20} aria-hidden /> Back up now
         </button>
@@ -91,7 +91,7 @@ export function BackupSection() {
           <button
             onClick={() => fileInput.current?.click()}
             disabled={!!busy}
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-line text-sm font-semibold text-ink-2 disabled:opacity-40"
+            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-pill border border-line text-sm font-semibold text-ink-2 disabled:opacity-40"
           >
             <RotateCcw size={16} aria-hidden /> Restore from a backup file
           </button>
@@ -106,10 +106,10 @@ export function BackupSection() {
               replaced.
             </p>
             <div className="mt-4 flex gap-3">
-              <button onClick={() => setPending(undefined)} disabled={!!busy} className="h-12 flex-1 rounded-full border border-line text-sm font-semibold">
+              <button onClick={() => setPending(undefined)} disabled={!!busy} className="h-12 flex-1 rounded-pill border border-line text-sm font-semibold">
                 Cancel
               </button>
-              <button onClick={restore} disabled={!!busy} className="h-12 flex-1 rounded-full bg-danger text-sm font-bold text-black disabled:opacity-40">
+              <button onClick={restore} disabled={!!busy} className="h-12 flex-1 rounded-pill bg-danger text-sm font-bold text-black disabled:opacity-40">
                 Restore
               </button>
             </div>

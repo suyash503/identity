@@ -3,7 +3,7 @@ import type { Habit, IconKey, Level, Log, RivalDay, RivalResult } from '../db'
 import { addDays, diffDays, fmtDay, fmtMinute, minutesInto, monthKey, rangeKeys, weekdayIndex, type DayKey } from './day'
 import { alertOf, isKept, keptIn, statusOf, type DayStatus, type Index } from './stats'
 
-export const RIVAL = { name: 'Alankrit', color: '#d946ef' } as const
+export const RIVAL = { name: 'Alankrit', color: '#c9a24a' } as const
 
 export type RivalMap = Map<DayKey, RivalDay>
 export type Outcome = 'win' | 'loss' | 'draw'

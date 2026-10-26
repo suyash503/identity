@@ -80,7 +80,7 @@ export const DEFAULT_HABITS: Habit[] = [
     id: 'gym',
     name: 'Gym',
     identity: 'I am someone who shows up to train.',
-    color: '#5b9dff',
+    color: '#c8573e',
     icon: 'gym',
     minimum: 'Go to the gym and do the treadmill.',
     full: 'Complete a full workout.',
@@ -91,7 +91,7 @@ export const DEFAULT_HABITS: Habit[] = [
     id: 'dsa',
     name: 'DSA',
     identity: 'I am someone who solves problems.',
-    color: '#ffc53d',
+    color: '#d9a441',
     icon: 'dsa',
     minimum: 'Watch one lecture, then write one problem on my own.',
     full: 'Solve 2+ problems on LeetCode.',
@@ -102,7 +102,7 @@ export const DEFAULT_HABITS: Habit[] = [
     id: 'git',
     name: 'GitHub',
     identity: 'I am someone who builds every day.',
-    color: '#39d353',
+    color: '#8fa84f',
     icon: 'git',
     minimum: 'Push one real commit.',
     full: 'Ship a meaningful chunk of work.',
@@ -113,7 +113,7 @@ export const DEFAULT_HABITS: Habit[] = [
     id: 'torch',
     name: 'PyTorch',
     identity: 'I am someone mastering deep learning.',
-    color: '#ff7a45',
+    color: '#5f9e97',
     icon: 'torch',
     minimum: 'Understand one PyTorch concept.',
     full: 'Implement the concept in code.',
@@ -121,6 +121,11 @@ export const DEFAULT_HABITS: Habit[] = [
     order: 3,
   },
 ]
+
+const NEON_TO_VINTAGE: Record<string, string> = { '#5b9dff': '#c8573e', '#ffc53d': '#d9a441', '#39d353': '#8fa84f', '#ff7a45': '#5f9e97' }
+
+/** Habits from before the vintage look (old backups too) still carry the neon defaults. */
+export const withVintageColor = (h: Habit): Habit => ({ ...h, color: NEON_TO_VINTAGE[h.color.toLowerCase()] ?? h.color })
 
 class IdentityDB extends Dexie {
   habits!: Table<Habit, string>
@@ -142,6 +147,15 @@ class IdentityDB extends Dexie {
       rival: 'day',
     })
     this.version(2).stores({ checkins: 'day' })
+    // v3: the vintage look. Habits still on the old neon defaults move to the faded print colours.
+    this.version(3).upgrade((tx) =>
+      tx
+        .table('habits')
+        .toCollection()
+        .modify((h: Habit) => {
+          h.color = withVintageColor(h).color
+        }),
+    )
     this.on('populate', (tx) => {
       tx.table('habits').bulkAdd(DEFAULT_HABITS)
       tx.table('settings').add({ key: 'startDay', value: dayKeyOf() })

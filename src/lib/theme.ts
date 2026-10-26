@@ -1,5 +1,5 @@
 // Themes: every surface colour is a CSS variable, so a theme is just a set of variables.
-// All themes are dark on purpose: habit colours and photos are tuned for a dark canvas.
+// All themes are dark, worn and warm on purpose: habit colours and photos are tuned for a dark canvas.
 import { dayKeyOf } from './day'
 
 export interface Theme {
@@ -21,40 +21,40 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
-    id: 'midnight',
-    name: 'Midnight',
-    glow: '#1d1d33',
-    vars: { bg: '#000000', surface: '#0c0c0f', surface2: '#141418', surface3: '#1f1f26', line: '#26262e', ink: '#f5f5f7', ink2: '#a8a8b3', ink3: '#85858f' },
+    id: 'iron',
+    name: 'Iron',
+    glow: '#3a2a15',
+    vars: { bg: '#12100d', surface: '#1a1712', surface2: '#221e17', surface3: '#2e281f', line: '#3d3529', ink: '#efe4cc', ink2: '#c2b497', ink3: '#968a73' },
   },
   {
-    id: 'ember',
-    name: 'Ember',
-    glow: '#4a1f0c',
-    vars: { bg: '#0e0907', surface: '#17100c', surface2: '#1f1611', surface3: '#2a1e17', line: '#35271e', ink: '#f8efe8', ink2: '#cbb8aa', ink3: '#a08d80' },
+    id: 'oxblood',
+    name: 'Oxblood',
+    glow: '#4a1712',
+    vars: { bg: '#140b0a', surface: '#1d1110', surface2: '#261715', surface3: '#331f1c', line: '#442a26', ink: '#f2e2d2', ink2: '#c9ad9c', ink3: '#9c8174' },
   },
   {
-    id: 'ocean',
-    name: 'Ocean',
-    glow: '#0d2d5c',
-    vars: { bg: '#050a12', surface: '#0a1320', surface2: '#101b2b', surface3: '#182538', line: '#213149', ink: '#eef4ff', ink2: '#a7b8d1', ink3: '#8194af' },
+    id: 'army',
+    name: 'Army',
+    glow: '#2f3517',
+    vars: { bg: '#10110c', surface: '#181a12', surface2: '#202318', surface3: '#2b2f20', line: '#3a3f2b', ink: '#ebe6cf', ink2: '#bdb898', ink3: '#908c70' },
   },
   {
-    id: 'forest',
-    name: 'Forest',
-    glow: '#0d3a25',
-    vars: { bg: '#050c09', surface: '#0a1611', surface2: '#101f18', surface3: '#182a21', line: '#21362b', ink: '#eef8f2', ink2: '#aac4b6', ink3: '#84a293' },
+    id: 'navy',
+    name: 'Navy',
+    glow: '#16263d',
+    vars: { bg: '#0c0f14', surface: '#13171e', surface2: '#1a1f28', surface3: '#242b36', line: '#323a47', ink: '#ece5d3', ink2: '#bab3a0', ink3: '#8e8978' },
   },
   {
-    id: 'plum',
-    name: 'Plum',
-    glow: '#3b1559',
-    vars: { bg: '#0b0710', surface: '#140e1c', surface2: '#1b1426', surface3: '#251c33', line: '#30263f', ink: '#f6f0ff', ink2: '#bbb0cd', ink3: '#9486aa' },
+    id: 'tobacco',
+    name: 'Tobacco',
+    glow: '#4d3010',
+    vars: { bg: '#15100a', surface: '#1e1710', surface2: '#281f15', surface3: '#352a1c', line: '#473826', ink: '#f3e3c4', ink2: '#cdb48a', ink3: '#a08965' },
   },
   {
-    id: 'graphite',
-    name: 'Graphite',
-    glow: '#2c2c36',
-    vars: { bg: '#111113', surface: '#19191d', surface2: '#212126', surface3: '#2b2b32', line: '#34343c', ink: '#f4f4f6', ink2: '#b2b2bd', ink3: '#8e8e9a' },
+    id: 'gunmetal',
+    name: 'Gunmetal',
+    glow: '#2a2c2e',
+    vars: { bg: '#111213', surface: '#18191b', surface2: '#202224', surface3: '#2a2c2f', line: '#383b3e', ink: '#e9e6dd', ink2: '#b8b4aa', ink3: '#8d8a82' },
   },
 ]
 

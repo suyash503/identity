@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 import { db, type Habit } from '../db'
 import { useData } from '../data'
 import { relativeDay, type DayKey } from '../lib/day'
@@ -12,7 +13,16 @@ export interface MissItem {
 }
 
 /** "What got in the way?" — asked once per miss. These answers are how triggers get found. */
-export function MissCheckin({ items, onDone }: { items: MissItem[]; onDone: () => void }) {
+export function MissCheckin({
+  items,
+  onDone,
+  onDidIt,
+}: {
+  items: MissItem[]
+  onDone: () => void
+  /** It wasn't a miss: the app just wasn't opened that day. Gets the item plus the misses still to ask about. */
+  onDidIt: (item: MissItem, rest: MissItem[]) => void
+}) {
   const { today } = useData()
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<string[]>([])
@@ -48,7 +58,7 @@ export function MissCheckin({ items, onDone }: { items: MissItem[]; onDone: () =
               key={r}
               onClick={() => toggle(r)}
               aria-pressed={on}
-              className={`h-11 rounded-full border px-4 text-[15px] transition-colors ${on ? 'border-ink bg-ink font-semibold text-black' : 'border-line bg-surface-2 text-ink'}`}
+              className={`h-11 rounded-pill border px-4 text-[15px] transition-colors ${on ? 'border-ink bg-ink font-semibold text-black' : 'border-line bg-surface-2 text-ink'}`}
             >
               {r}
             </button>
@@ -57,17 +67,24 @@ export function MissCheckin({ items, onDone }: { items: MissItem[]; onDone: () =
       </div>
 
       <div className="mt-6 flex gap-3">
-        <button onClick={() => save([])} className="h-14 flex-1 rounded-full border border-line font-display text-base font-bold uppercase tracking-[0.14em] text-ink-2">
+        <button onClick={() => save([])} className="h-14 flex-1 rounded-pill border border-line font-display text-base font-bold uppercase tracking-[0.14em] text-ink-2">
           Skip
         </button>
         <button
           onClick={() => save(picked)}
           disabled={picked.length === 0}
-          className="h-14 flex-[2] rounded-full bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-30"
+          className="h-14 flex-[2] rounded-pill bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-30"
         >
           Log it
         </button>
       </div>
+      <button
+        onClick={() => onDidIt(item, items.slice(index + 1))}
+        className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-pill text-[15px] font-medium"
+        style={{ color: item.habit.color }}
+      >
+        <Check size={17} strokeWidth={2.75} aria-hidden /> I did it, just didn’t log it
+      </button>
     </Sheet>
   )
 }

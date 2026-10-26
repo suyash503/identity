@@ -65,13 +65,13 @@ export function Patterns({ onOpenCheckin }: { onOpenCheckin: () => void }) {
       {reasons.length > 0 && (
         <>
           <SectionLabel>What gets in the way</SectionLabel>
-          <div className="space-y-2 rounded-[24px] border border-line bg-surface p-5">
+          <div className="space-y-2 rounded-card border border-line bg-surface p-5">
             {reasons.map(([r, n]) => (
               <div key={r} className="flex items-center gap-3">
                 <div className="w-32 shrink-0 truncate text-[14px] text-ink-2">{r}</div>
-                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-3">
+                <div className="h-2.5 flex-1 overflow-hidden rounded-pill bg-surface-3">
                   <motion.div
-                    className="h-full rounded-full bg-danger/80"
+                    className="h-full rounded-pill bg-danger/80"
                     initial={{ width: 0 }}
                     animate={{ width: `${(n / reasons[0][1]) * 100}%` }}
                     transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -93,8 +93,8 @@ function CheckinCard({ onOpen }: { onOpen: () => void }) {
   const c = checkins.get(today)
   const done = c && !c.skipped
   return (
-    <button onClick={onOpen} className="mt-6 flex w-full items-center gap-4 rounded-[24px] border border-line bg-surface p-4 text-left">
-      <div className="grid size-12 shrink-0 place-items-center rounded-2xl" style={{ background: 'rgb(185 180 234 / .12)', color: GHOST }}>
+    <button onClick={onOpen} className="mt-6 flex w-full items-center gap-4 rounded-card border border-line bg-surface p-4 text-left">
+      <div className="grid size-12 shrink-0 place-items-center rounded-2xl" style={{ background: 'rgb(169 185 198 / .12)', color: GHOST }}>
         <Moon size={22} aria-hidden />
       </div>
       <div className="min-w-0 flex-1">
@@ -118,9 +118,8 @@ function InsightCard({ insight: i, delay }: { insight: Insight; delay: number })
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
-      className="relative overflow-hidden rounded-[28px] border border-line bg-surface p-5"
+      className="relative overflow-hidden rounded-card border border-line bg-surface p-5"
     >
-      <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full opacity-[0.14] blur-3xl" style={{ background: accent }} />
       <div className="relative flex items-center gap-2" style={{ color: accent }}>
         <Icon size={16} aria-hidden />
         <Eyebrow style={{ color: accent }}>{i.title}</Eyebrow>
@@ -162,9 +161,9 @@ function Bars({ bars, accent, vertical }: { bars: NonNullable<Insight['bars']>; 
             <span className={b.highlight ? 'text-ink' : 'text-ink-3'}>{b.label}</span>
             <span className="font-display font-bold tabular-nums">{Math.round(b.value * 100)}%</span>
           </div>
-          <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-3">
+          <div className="mt-1 h-2 overflow-hidden rounded-pill bg-surface-3">
             <motion.div
-              className="h-full rounded-full"
+              className="h-full rounded-pill"
               style={{ background: b.highlight ? accent : 'var(--color-ink-3)' }}
               initial={{ width: 0 }}
               animate={{ width: `${b.value * 100}%` }}
@@ -180,7 +179,7 @@ function Bars({ bars, accent, vertical }: { bars: NonNullable<Insight['bars']>; 
 function LockedCard({ insight: i }: { insight: Insight }) {
   const Icon = ICONS[i.kind]
   return (
-    <div className="rounded-[22px] border border-line bg-surface px-4 py-4">
+    <div className="rounded-card border border-line bg-surface px-4 py-4">
       <div className="flex items-center gap-3">
         <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface-2 text-ink-3">
           <Icon size={18} aria-hidden />
@@ -192,8 +191,8 @@ function LockedCard({ insight: i }: { insight: Insight }) {
           <div className="text-[13px] text-ink-3">{i.needs} to unlock</div>
         </div>
       </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-3" role="progressbar" aria-valuenow={Math.round(i.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${i.title} progress`}>
-        <div className="h-full rounded-full bg-ghost/70" style={{ width: `${i.progress * 100}%` }} />
+      <div className="mt-3 h-1.5 overflow-hidden rounded-pill bg-surface-3" role="progressbar" aria-valuenow={Math.round(i.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${i.title} progress`}>
+        <div className="h-full rounded-pill bg-ghost/70" style={{ width: `${i.progress * 100}%` }} />
       </div>
       <p className="mt-2 text-[13px] leading-relaxed text-ink-3">{i.body}</p>
     </div>

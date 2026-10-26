@@ -1,27 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  /* Old-school training log: a poster face for headlines, a typewriter for everything else. */
+  --font-display: "Big Shoulders Display", "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-sans: "Courier Prime", "Courier New", ui-monospace, monospace;
 
-  --color-bg: #000000;
-  --color-surface: #0c0c0f;
-  --color-surface-2: #141418;
-  --color-surface-3: #1f1f26;
-  --color-line: #26262e;
-  --color-ink: #f5f5f7;
-  --color-ink-2: #a8a8b3;
-  --color-ink-3: #85858f;
-  --color-danger: #ff3b5c;
-  --color-ghost: #b9b4ea;
-  --color-rival: #d946ef;
-  --color-glow: #1d1d33;
+  --color-bg: #12100d;
+  --color-surface: #1a1712;
+  --color-surface-2: #221e17;
+  --color-surface-3: #2e281f;
+  --color-line: #3d3529;
+  --color-ink: #efe4cc;
+  --color-ink-2: #c2b497;
+  --color-ink-3: #968a73;
+  --color-danger: #d9533b;
+  --color-ghost: #a9b9c6;
+  --color-rival: #c9a24a;
+  --color-glow: #3a2a15;
+
+  /* Printed matter has corners. */
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-card: 5px;
+  --radius-pill: 3px;
 
   --animate-danger-pulse: danger-pulse 2.2s ease-in-out infinite;
 
   @keyframes danger-pulse {
-    0%, 100% { box-shadow: inset 0 0 0 1.5px rgb(255 59 92 / 0.5), 0 0 0 0 rgb(255 59 92 / 0); }
-    50% { box-shadow: inset 0 0 0 1.5px rgb(255 59 92 / 1), 0 0 32px -6px rgb(255 59 92 / 0.55); }
+    0%, 100% { box-shadow: inset 0 0 0 1.5px rgb(217 83 59 / 0.45); }
+    50% { box-shadow: inset 0 0 0 1.5px rgb(217 83 59 / 1); }
   }
 }
 
@@ -32,14 +41,27 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* A soft wash of the theme's colour across the top of the screen. */
+/* A bare bulb over the bench: warm light at the top, darker towards the corners. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(120% 55% at 50% -12%, color-mix(in oklab, var(--color-glow) 85%, transparent), transparent 70%);
+  background:
+    radial-gradient(110% 50% at 50% -10%, color-mix(in oklab, var(--color-glow) 90%, transparent), transparent 70%),
+    radial-gradient(150% 100% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.55) 100%);
+}
+
+/* Film grain over everything, overlays included. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 body {
@@ -55,13 +77,37 @@ body {
 button { cursor: pointer; }
 
 :focus-visible {
-  outline: 2px solid var(--color-ink);
+  outline: 2px dashed var(--color-ink);
   outline-offset: 3px;
-  border-radius: 12px;
+  border-radius: 2px;
 }
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* A rubber stamp: double rule, slightly crooked, ink that didn't take everywhere. */
+.stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  border: 3px double currentColor;
+  border-radius: 4px;
+  padding: 0.35em 0.7em 0.3em;
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  transform: rotate(-7deg);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  mask-size: 120px 120px;
+}
+
+/* Dashed rule, like a perforation on a ticket stub. */
+.rule {
+  height: 0;
+  border-top: 1.5px dashed var(--color-line);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-danger-pulse { animation: none; box-shadow: inset 0 0 0 1.5px var(--color-danger); }

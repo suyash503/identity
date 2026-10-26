@@ -6,8 +6,8 @@ import { addDays, rangeKeys } from '../lib/day'
 import { statusOf, type DayStatus, type Index } from '../lib/stats'
 import { useBackClose } from '../lib/backStack'
 
-export const DANGER = '#ff3b5c'
-export const GHOST = '#b9b4ea'
+export const DANGER = '#d9533b'
+export const GHOST = '#a9b9c6'
 
 /** Translucent version of a color, for tints and glows. */
 export const tint = (color: string, pct: number) => `color-mix(in oklab, ${color} ${pct}%, transparent)`
@@ -23,7 +23,7 @@ export function IconTile({ habit, size = 48 }: { habit: Habit; size?: number }) 
   return (
     <div
       className="grid shrink-0 place-items-center rounded-2xl"
-      style={{ width: size, height: size, background: tint(habit.color, 16), color: habit.color }}
+      style={{ width: size, height: size, background: tint(habit.color, 10), boxShadow: `inset 0 0 0 1.5px ${tint(habit.color, 55)}`, color: habit.color }}
     >
       <HabitIcon habit={habit} size={Math.round(size * 0.46)} />
     </div>
@@ -32,7 +32,7 @@ export function IconTile({ habit, size = 48 }: { habit: Habit; size?: number }) 
 
 export function Eyebrow({ children, className = '', style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
-    <div className={`font-display text-[12px] font-semibold uppercase tracking-[0.22em] text-ink-3 ${className}`} style={style}>
+    <div className={`font-sans text-[12px] font-bold uppercase tracking-[0.18em] text-ink-3 ${className}`} style={style}>
       {children}
     </div>
   )
@@ -42,7 +42,7 @@ export function SectionLabel({ children, color }: { children: ReactNode; color?:
   return (
     <div className="mb-3 mt-9 flex items-center gap-3">
       <Eyebrow style={color ? { color } : undefined}>{children}</Eyebrow>
-      <div className="h-px flex-1 bg-line" />
+      <div className="rule flex-1" />
     </div>
   )
 }
@@ -66,11 +66,11 @@ export function ChainBadge({ links, cracks, compact }: { links: number; cracks: 
 export function statusStyle(status: DayStatus, color: string): CSSProperties {
   switch (status) {
     case 'full':
-      return { background: color, boxShadow: `0 0 10px -2px ${tint(color, 80)}` }
+      return { background: color }
     case 'min':
       return { background: tint(color, 50) }
     case 'missed':
-      return { background: tint(DANGER, 22) }
+      return { background: `repeating-linear-gradient(135deg, ${tint(DANGER, 30)} 0 2px, transparent 2px 5px)` }
     case 'pending':
       return { boxShadow: `inset 0 0 0 1.5px ${tint(color, 70)}` }
     default:
@@ -100,7 +100,7 @@ export function Segmented<T extends string | number>({
   id: string
 }) {
   return (
-    <div role="tablist" className="flex rounded-full border border-line bg-surface p-1">
+    <div role="tablist" className="flex rounded-pill border border-line bg-surface p-1">
       {options.map((o) => {
         const active = o.value === value
         return (
@@ -109,12 +109,12 @@ export function Segmented<T extends string | number>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className={`relative h-10 flex-1 rounded-full font-display text-sm font-semibold uppercase tracking-[0.14em] transition-colors ${active ? 'text-black' : 'text-ink-2'}`}
+            className={`relative h-10 flex-1 rounded-pill font-display text-sm font-semibold uppercase tracking-[0.14em] transition-colors ${active ? 'text-black' : 'text-ink-2'}`}
           >
             {active && (
               <motion.span
                 layoutId={`seg-${id}`}
-                className="absolute inset-0 rounded-full bg-ink"
+                className="absolute inset-0 rounded-pill bg-ink"
                 transition={{ type: 'spring', stiffness: 500, damping: 38 }}
               />
             )}
@@ -163,13 +163,13 @@ export function Sheet({ children, label, onClose }: { children: ReactNode; label
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="relative w-full max-w-md rounded-t-[32px] border-t border-line bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-3"
+        className="relative w-full max-w-md rounded-t-card border-t border-line bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-3"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', stiffness: 420, damping: 40 }}
       >
-        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-surface-3" />
+        <div className="mx-auto mb-4 h-1.5 w-10 rounded-pill bg-surface-3" />
         {children}
       </motion.div>
     </motion.div>
@@ -179,12 +179,12 @@ export function Sheet({ children, label, onClose }: { children: ReactNode; label
 /** Level badge shown on sealed habits. */
 export function LevelBadge({ level, color }: { level: 'min' | 'full'; color: string }) {
   return level === 'full' ? (
-    <span className="rounded-full px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.18em] text-black" style={{ background: color }}>
+    <span className="rounded-pill px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.18em] text-black" style={{ background: color }}>
       Full
     </span>
   ) : (
     <span
-      className="rounded-full px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.18em]"
+      className="rounded-pill px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.18em]"
       style={{ color, boxShadow: `inset 0 0 0 1.5px ${tint(color, 70)}`, background: 'rgb(0 0 0 / .45)' }}
     >
       Minimum
@@ -214,8 +214,8 @@ export function RivalAvatar({ size = 44 }: { size?: number }) {
   return (
     <div
       aria-hidden
-      className="grid shrink-0 place-items-center rounded-full font-display font-extrabold leading-none text-black"
-      style={{ width: size, height: size, fontSize: size * 0.52, background: 'linear-gradient(135deg, #f5c2ff, #d946ef 55%, #7c3aed)' }}
+      className="grid shrink-0 place-items-center rounded-pill font-display font-extrabold leading-none text-black"
+      style={{ width: size, height: size, fontSize: size * 0.52, background: 'var(--color-rival)' }}
     >
       A
     </div>

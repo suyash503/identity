@@ -35,7 +35,7 @@ export function CloudSection() {
   return (
     <>
       <SectionLabel>Cloud backup</SectionLabel>
-      <div className="rounded-[24px] border border-line bg-surface p-5">{connected ? <Connected /> : <Connect />}</div>
+      <div className="rounded-card border border-line bg-surface p-5">{connected ? <Connected /> : <Connect />}</div>
     </>
   )
 }
@@ -154,7 +154,7 @@ function Connect() {
         <button
           type="submit"
           disabled={!!status || phrase.trim().length < MIN_PHRASE}
-          className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
+          className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-pill bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
         >
           <Cloud size={20} aria-hidden /> Reconnect
         </button>
@@ -205,7 +205,7 @@ function Connected() {
       <div className="flex items-center gap-3">
         <div
           className="grid size-12 shrink-0 place-items-center rounded-2xl"
-          style={sync?.error ? { background: 'rgb(255 59 92 / .14)', color: 'var(--color-danger)' } : { background: 'rgb(57 211 83 / .12)', color: '#39d353' }}
+          style={sync?.error ? { background: 'rgb(217 83 59 / .14)', color: 'var(--color-danger)' } : { background: 'rgb(143 168 79 / .12)', color: '#8fa84f' }}
         >
           <Cloud size={24} aria-hidden />
         </div>
@@ -251,7 +251,7 @@ function Connected() {
             placeholder="A phrase you’ll remember"
             className={`mt-3 ${inputClass}`}
           />
-          <button type="submit" disabled={!!busy || phrase.trim().length < MIN_PHRASE} className="mt-3 h-11 w-full rounded-full bg-ink text-sm font-bold text-black disabled:opacity-40">
+          <button type="submit" disabled={!!busy || phrase.trim().length < MIN_PHRASE} className="mt-3 h-11 w-full rounded-pill bg-ink text-sm font-bold text-black disabled:opacity-40">
             Save phrase
           </button>
         </form>
@@ -260,7 +260,7 @@ function Connected() {
       <button
         onClick={() => run('Syncing…', async () => void (await syncCloud()))}
         disabled={!!busy}
-        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-line text-sm font-semibold disabled:opacity-40"
+        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-pill border border-line text-sm font-semibold disabled:opacity-40"
       >
         <CloudUpload size={16} aria-hidden /> Sync now
       </button>
@@ -272,7 +272,7 @@ function Connected() {
             {time(pending.summary.exportedAt)}: {describe(pending.summary)}. It replaces what’s on this phone, but anything you’ve sealed here that isn’t in the backup is kept.
           </p>
           <div className="mt-4 flex gap-3">
-            <button onClick={() => setPending(undefined)} disabled={!!busy} className="h-12 flex-1 rounded-full border border-line text-sm font-semibold">
+            <button onClick={() => setPending(undefined)} disabled={!!busy} className="h-12 flex-1 rounded-pill border border-line text-sm font-semibold">
               Back
             </button>
             <button
@@ -285,7 +285,7 @@ function Connected() {
                 })
               }
               disabled={!!busy}
-              className="h-12 flex-1 rounded-full bg-danger text-sm font-bold text-black disabled:opacity-40"
+              className="h-12 flex-1 rounded-pill bg-danger text-sm font-bold text-black disabled:opacity-40"
             >
               Restore
             </button>
@@ -310,7 +310,7 @@ function Connected() {
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold">
                       {time(b.createdAt)}
-                      {b.summary.seals === mostSeals && mostSeals > 0 && <span className="ml-2 text-[12px] font-bold uppercase tracking-wide text-[#39d353]">Most complete</span>}
+                      {b.summary.seals === mostSeals && mostSeals > 0 && <span className="ml-2 text-[12px] font-bold uppercase tracking-wide text-[#8fa84f]">Most complete</span>}
                     </span>
                     <span className="block text-[13px] text-ink-3">{describe(b.summary)}</span>
                   </span>
@@ -324,7 +324,7 @@ function Connected() {
         <button
           onClick={() => run('Loading your backups…', async () => setBackups(await listCloudBackups()))}
           disabled={!!busy}
-          className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold disabled:opacity-40 ${sync?.needsRestore ? 'bg-ink text-black' : 'border border-line text-ink-2'}`}
+          className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-pill text-sm font-semibold disabled:opacity-40 ${sync?.needsRestore ? 'bg-ink text-black' : 'border border-line text-ink-2'}`}
         >
           <DownloadCloud size={16} aria-hidden /> Restore from cloud
         </button>
@@ -332,7 +332,7 @@ function Connected() {
 
       <button
         onClick={() => (confirmDisconnect ? void disconnectCloud() : setConfirmDisconnect(true))}
-        className={`mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm ${confirmDisconnect ? 'bg-danger/15 font-semibold text-danger' : 'text-ink-3'}`}
+        className={`mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-pill text-sm ${confirmDisconnect ? 'bg-danger/15 font-semibold text-danger' : 'text-ink-3'}`}
       >
         <Link2Off size={16} aria-hidden /> {confirmDisconnect ? 'Tap again to disconnect this phone' : 'Disconnect this phone'}
       </button>

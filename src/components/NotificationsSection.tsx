@@ -61,11 +61,11 @@ export function NotificationsSection() {
   return (
     <>
       <SectionLabel>Notifications</SectionLabel>
-      <div className="rounded-[24px] border border-line bg-surface p-5">
+      <div className="rounded-card border border-line bg-surface p-5">
         <div className="flex items-center gap-3">
           <div
             className="grid size-12 shrink-0 place-items-center rounded-2xl"
-            style={enabled ? { background: 'rgb(217 70 239 / .14)', color: RIVAL.color } : { background: 'var(--color-surface-2)', color: 'var(--color-ink-3)' }}
+            style={enabled ? { background: 'rgb(201 162 74 / .14)', color: RIVAL.color } : { background: 'var(--color-surface-2)', color: 'var(--color-ink-3)' }}
           >
             {enabled ? <Bell size={24} aria-hidden /> : <BellOff size={24} aria-hidden />}
           </div>
@@ -83,7 +83,7 @@ export function NotificationsSection() {
           <button
             onClick={() => run('Turning on…', () => turnOn(prefs), 'Notifications are on.')}
             disabled={!!busy}
-            className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
+            className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-pill bg-ink font-display text-base font-bold uppercase tracking-[0.14em] text-black disabled:opacity-40"
           >
             <Bell size={20} aria-hidden /> Turn on notifications
           </button>
@@ -92,14 +92,14 @@ export function NotificationsSection() {
             <button
               onClick={() => run('Sending…', test, 'Test sent. It should arrive in a few seconds.')}
               disabled={!!busy}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-line text-sm font-semibold disabled:opacity-40"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-pill border border-line text-sm font-semibold disabled:opacity-40"
             >
               <Send size={16} aria-hidden /> Send a test
             </button>
             <button
               onClick={() => run('Turning off…', () => turnOff(prefs), 'Notifications are off.')}
               disabled={!!busy}
-              className="h-12 flex-1 rounded-full border border-line text-sm font-semibold text-ink-2 disabled:opacity-40"
+              className="h-12 flex-1 rounded-pill border border-line text-sm font-semibold text-ink-2 disabled:opacity-40"
             >
               Turn off
             </button>
@@ -137,9 +137,9 @@ function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: () =
       aria-label={label}
       onClick={onChange}
       disabled={disabled}
-      className={`relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-50 ${on ? 'bg-ink' : 'bg-surface-3'}`}
+      className={`relative h-8 w-[52px] shrink-0 rounded-pill transition-colors disabled:opacity-50 ${on ? 'bg-ink' : 'bg-surface-3'}`}
     >
-      <span className={`absolute top-1 size-6 rounded-full transition-all ${on ? 'left-[24px] bg-black' : 'left-1 bg-ink-3'}`} />
+      <span className={`absolute top-1 size-6 rounded-pill transition-all ${on ? 'left-[24px] bg-black' : 'left-1 bg-ink-3'}`} />
     </button>
   )
 }
